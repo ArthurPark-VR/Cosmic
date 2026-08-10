@@ -930,6 +930,19 @@ public class StatEffect {
         return applyTo(chr, chr, true, pos, false, 1);
     }
 
+    /**
+     * Applies this effect to a player as though someone else had cast it on them, so none of
+     * the caster-side costs are charged - no MP, no HP, no item consumption - and it isn't
+     * propagated to nearby party members.
+     *
+     * For buffs granted by the server rather than cast by the player. Charging MP there would
+     * drain the player on every refresh, and worse, leave them unbuffed whenever their MP was
+     * below the cost, since applyHpMpChange refuses the change and the whole effect aborts.
+     */
+    public boolean applyToWithoutCost(Character chr) {
+        return applyTo(chr, chr, false, null, false, 1);
+    }
+
     // primary: the player caster of the buff
     private boolean applyTo(Character applyfrom, Character applyto, boolean primary, Point pos, boolean useMaxRange, int affectedPlayers) {
         if (skill && (sourceid == GM.HIDE || sourceid == SuperGM.HIDE)) {

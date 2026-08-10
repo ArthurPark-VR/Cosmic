@@ -112,7 +112,10 @@ public class GlobalBuffs {
 
         for (Skill skill : getSkills()) {
             try {
-                skill.getEffect(skill.getMaxLevel()).applyTo(chr);
+                // Without cost: these are granted, not cast. Several of them have an mpCon
+                // (Maple Warrior alone is 60), which would otherwise be drained on every
+                // refresh and would block the buff outright when the player was short of MP.
+                skill.getEffect(skill.getMaxLevel()).applyToWithoutCost(chr);
             } catch (Exception e) {
                 // A single bad buff must not stop the rest, nor break login.
                 log.warn("Failed to apply global buff {} to {}.", skill.getId(), chr.getName(), e);
