@@ -10,4 +10,6 @@ sql
 tools
 
 # Created by the db when using docker-compose, large and causes rebuild issues if sent to the context.
-docker-db-data
+# Must be the full path from the context root - a bare "docker-db-data" only matches a top-level
+# entry and silently lets the (ever-growing) database directory into the build context.
+database/docker-db-data

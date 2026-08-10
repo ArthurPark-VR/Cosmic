@@ -51,6 +51,19 @@ function start(mode, type, selection) { // missing script for questid found than
             qm.gainItem(1142069, 1);
             if (qm.getJobId() % 10 == 1) {
                 qm.changeJobById(qm.getJobId() + 1);
+
+                // Thunder Breaker 4th job skills are custom to this server - v83 ships job 1512
+                // with an empty skill list, so there is nothing to learn without this.
+                // Master level is granted here because 4th job skills are capped by master level
+                // and v83 has no mastery books for skills that never existed.
+                // See docs/thunder-breaker-4th-job.md.
+                if (qm.getJobId() == 1512) {
+                    qm.teachSkill(15121000, 0, 30, -1);   // Maple Warrior
+                    qm.teachSkill(15121001, 0, 30, -1);   // Sharp Eyes
+                    qm.teachSkill(15121002, 0, 30, -1);   // Power Stance
+                    qm.teachSkill(15121003, 0, 5, -1);    // Hero's Will
+                    qm.teachSkill(15121004, 0, 20, -1);   // Flash Jump
+                }
             }
 
             qm.forceStartQuest();

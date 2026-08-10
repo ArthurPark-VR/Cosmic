@@ -1,6 +1,7 @@
 package config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ServerConfig {
@@ -48,6 +49,13 @@ public class ServerConfig {
     public String LANHOST;
     public String LOCALHOST;
     public boolean GMSERVER;
+
+    //Global Buffs
+    public boolean USE_GLOBAL_BUFFS;
+    public int GLOBAL_BUFF_INTERVAL;
+    // Declared as strings rather than integers: yamlbeans reads YAML scalars as strings by
+    // default, so this parses predictably. GlobalBuffs converts and validates them.
+    public List<String> GLOBAL_BUFF_SKILLS;
 
     //Other configuration
     public boolean SHUTDOWNHOOK;

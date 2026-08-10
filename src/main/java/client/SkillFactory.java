@@ -340,6 +340,10 @@ public class SkillFactory {
                 case ThunderBreaker.LIGHTNING_CHARGE:
                 case ThunderBreaker.SPEED_INFUSION:
                 case ThunderBreaker.TRANSFORMATION:
+                case ThunderBreaker.MAPLE_WARRIOR:
+                case ThunderBreaker.SHARP_EYES:
+                case ThunderBreaker.STANCE:
+                case ThunderBreaker.HEROS_WILL:
                 case Legend.BLESSING_OF_THE_FAIRY:
                 case Legend.AGILE_BODY:
                 case Legend.ECHO_OF_HERO:

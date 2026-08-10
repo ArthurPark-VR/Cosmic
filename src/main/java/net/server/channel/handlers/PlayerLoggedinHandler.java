@@ -57,6 +57,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
+import server.GlobalBuffs;
 import server.life.MobSkill;
 import service.NoteService;
 import tools.DatabaseConnection;
@@ -454,6 +455,10 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             if (newcomer) {
                 player.setLoginTime(System.currentTimeMillis());
             }
+
+            // Applied here as well as on the refresh schedule, so they are up immediately
+            // rather than after the first interval elapses.
+            GlobalBuffs.apply(player);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

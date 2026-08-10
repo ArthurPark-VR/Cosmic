@@ -5301,7 +5301,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public int getMaxClassLevel() {
-        return isCygnus() ? 120 : 200;
+        return 200;
     }
 
     public int getMaxLevel() {
@@ -5565,8 +5565,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void setGMLevel(int level) {
-        this.gmLevel = Math.min(level, 6);
-        this.gmLevel = Math.max(level, 0);
+        // Both bounds in one expression - assigning twice meant the upper clamp was
+        // immediately discarded by the lower one, so any level above 6 was stored as-is.
+        this.gmLevel = Math.max(0, Math.min(level, 6));
 
         whiteChat = gmLevel >= 4;   // thanks ozanrijen for suggesting default white chat
     }

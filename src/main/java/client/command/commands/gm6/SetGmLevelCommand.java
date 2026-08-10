@@ -44,10 +44,14 @@ public class SetGmLevelCommand extends Command {
         Character target = c.getChannelServer().getPlayerStorage().getCharacterByName(params[0]);
         if (target != null) {
             target.setGMLevel(newLevel);
-            target.getClient().setGMLevel(newLevel);
+            // Read the level back rather than reusing the argument: setGMLevel clamps to 0-6,
+            // so the two would otherwise disagree and the messages below could claim a level
+            // that was never stored.
+            int appliedLevel = target.gmLevel();
+            target.getClient().setGMLevel(appliedLevel);
 
-            target.dropMessage("You are now a level " + newLevel + " GM. See @commands for a list of available commands.");
-            player.dropMessage(target + " is now a level " + newLevel + " GM.");
+            target.dropMessage("You are now a level " + appliedLevel + " GM. See @commands for a list of available commands.");
+            player.dropMessage(target + " is now a level " + appliedLevel + " GM.");
         } else {
             player.dropMessage("Player '" + params[0] + "' was not found on this channel.");
         }

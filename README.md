@@ -93,6 +93,8 @@ Support for Docker is also provided out of the box, as an alternative to running
 
 Making changes becomes a bit more tedious though as you have to rebuild the server image via `docker compose up --build`.
 
+For a step-by-step walkthrough of the Docker route - server, database and client on a single machine, reachable only from that machine - see [docs/private-server-setup.md](docs/private-server-setup.md).
+
 #### Jar
 Another option is to start the server from a terminal by running a jar file. You first need to build the jar file from source which requires [Maven](https://maven.apache.org/). Fortunately, [Maven Wrapper](https://maven.apache.org/wrapper/) is provided so you don't have to install Maven separately.
 

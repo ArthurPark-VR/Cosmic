@@ -563,6 +563,7 @@ public class StatEffect {
                 case Hero.STANCE:
                 case Paladin.STANCE:
                 case DarkKnight.STANCE:
+                case ThunderBreaker.STANCE:
                 case Aran.FREEZE_STANDING:
                     statups.add(new Pair<>(BuffStat.STANCE, iprop));
                     break;
@@ -635,6 +636,7 @@ public class StatEffect {
                     break;
                 case Bowmaster.SHARP_EYES:
                 case Marksman.SHARP_EYES:
+                case ThunderBreaker.SHARP_EYES:
                     statups.add(new Pair<>(BuffStat.SHARP_EYES, ret.x << 8 | ret.y));
                     break;
                 case WindArcher.WIND_WALK:
@@ -721,6 +723,7 @@ public class StatEffect {
                 case Buccaneer.MAPLE_WARRIOR:
                 case Aran.MAPLE_WARRIOR:
                 case Evan.MAPLE_WARRIOR:
+                case ThunderBreaker.MAPLE_WARRIOR:
                     statups.add(new Pair<>(BuffStat.MAPLE_WARRIOR, ret.x));
                     break;
                 // SUMMON
@@ -1703,6 +1706,7 @@ public class StatEffect {
             case Shadower.HEROS_WILL:
             case Buccaneer.PIRATES_RAGE:
             case Aran.HEROS_WILL:
+            case ThunderBreaker.HEROS_WILL:
                 return true;
 
             default:
