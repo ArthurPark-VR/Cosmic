@@ -12827,26 +12827,26 @@
     </imgdir>
   <imgdir name="15121004">
     <string name="name" value="Flash Jump"/>
-    <string name="desc" value="[Master Level : 20]\nAllows a second Jump toward the direction which the character was headed when used while the character is in the air. The distance of the Jump increases in accordance with the advancement of the character’s skill level."/>
-    <string name="h1" value="MP - 60, Jumps a pre-established distance"/>
-    <string name="h2" value="MP - 57, Jumps a pre-established distance"/>
-    <string name="h3" value="MP - 54, Jumps a pre-established distance"/>
-    <string name="h4" value="MP - 51, Jumps a pre-established distance"/>
-    <string name="h5" value="MP - 48, Jumps a pre-established distance"/>
-    <string name="h6" value="MP - 45, Jumps a pre-established distance"/>
-    <string name="h7" value="MP - 42, Jumps a pre-established distance"/>
-    <string name="h8" value="MP - 39, Jumps a pre-established distance"/>
-    <string name="h9" value="MP - 36, Jumps a pre-established distance"/>
-    <string name="h10" value="MP - 33, Jumps a pre-established distance"/>
-    <string name="h11" value="MP - 31, Jumps a pre-established distance"/>
-    <string name="h12" value="MP - 29, Jumps a pre-established distance"/>
-    <string name="h13" value="MP - 27, Jumps a pre-established distance"/>
-    <string name="h14" value="MP - 25, Jumps a pre-established distance"/>
-    <string name="h15" value="MP - 23, Jumps a pre-established distance"/>
-    <string name="h16" value="MP - 21, Jumps a pre-established distance"/>
-    <string name="h17" value="MP - 19, Jumps a pre-established distance"/>
-    <string name="h18" value="MP - 17, Jumps a pre-established distance"/>
-    <string name="h19" value="MP - 15, Jumps a pre-established distance"/>
-    <string name="h20" value="MP - 13, Jumps a pre-established distance"/>
+    <string name="desc" value="[Master Level : 20]\nWhile in the air after a jump, use this skill + the arrow for a second jump. The higher the skill level, the farther the distance for the jump.\nRequired Skill : #cAt least Level 5 on Avenger#"/>
+    <string name="h1" value="MP - 60, Jumps a certain distance"/>
+    <string name="h2" value="MP - 57, Jumps a certain distance"/>
+    <string name="h3" value="MP - 54, Jumps a certain distance"/>
+    <string name="h4" value="MP - 51, Jumps a certain distance"/>
+    <string name="h5" value="MP - 48, Jumps a certain distance"/>
+    <string name="h6" value="MP - 45, Jumps a certain distance"/>
+    <string name="h7" value="MP - 42, Jumps a certain distance"/>
+    <string name="h8" value="MP - 39, Jumps a certain distance"/>
+    <string name="h9" value="MP - 36, Jumps a certain distance"/>
+    <string name="h10" value="MP - 33, Jumps a certain distance"/>
+    <string name="h11" value="MP - 31, Jumps a certain distance"/>
+    <string name="h12" value="MP - 29, Jumps a certain distance"/>
+    <string name="h13" value="MP - 27, Jumps a certain distance"/>
+    <string name="h14" value="MP - 25, Jumps a certain distance"/>
+    <string name="h15" value="MP - 23, Jumps a certain distance"/>
+    <string name="h16" value="MP - 21, Jumps a certain distance"/>
+    <string name="h17" value="MP - 19, Jumps a certain distance"/>
+    <string name="h18" value="MP - 17, Jumps a certain distance"/>
+    <string name="h19" value="MP - 15, Jumps a certain distance"/>
+    <string name="h20" value="MP - 13, Jumps a certain distance"/>
     </imgdir>
 </imgdir>

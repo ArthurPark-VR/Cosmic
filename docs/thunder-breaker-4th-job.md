@@ -40,10 +40,16 @@ and effect values verbatim:
 | Sharp Eyes | `15121001` | `3121002` (Bowmaster) | 30 |
 | Power Stance | `15121002` | `1121002` (Hero) | 30 |
 | Hero's Will | `15121003` | `1121011` (Hero) | 5 |
-| Flash Jump | `15121004` | `14101004` (Night Walker) | 20 |
+| Flash Jump | `15121004` | `4111006` (Hermit) | 20 |
 
-Maple Warrior comes from the Buccaneer since Thunder Breaker is the pirate branch, and
-Flash Jump from the Night Walker since that is the Cygnus version.
+Maple Warrior comes from the Buccaneer since Thunder Breaker is the pirate branch. Flash
+Jump comes from the Hermit rather than the Night Walker (the Cygnus version) purely for
+the visuals.
+
+The Hermit's Flash Jump carries a `req` node requiring Hermit skill `4111005`, which a
+Thunder Breaker can never learn. It is stripped from the copy. The server ignores skill
+prerequisites entirely, but the client grays out skills whose requirements are unmet, so
+leaving it in would make the skill unlearnable in game.
 
 Verified against the originals - the clones produce identical buff values at max level:
 `MAPLE_WARRIOR:15`, `SHARP_EYES:3980`, `STANCE:90` (90% knockback resistance).
@@ -58,7 +64,7 @@ Verified against the originals - the clones produce identical buff values at max
   the `STANCE`, `SHARP_EYES` and `MAPLE_WARRIOR` cases, plus `isHerosWill()`.
   Without these the skills would exist but do nothing.
 - `SkillFactory` marks the four buff skills as buffs (Flash Jump is a movement skill and
-  is deliberately excluded, matching how Hermit and Night Walker Flash Jump are handled).
+  is deliberately excluded, matching how the Hermit and Night Walker versions are handled).
 - `wz/Skill.wz/1512.img.xml` now contains the five skill definitions.
 - `wz/String.wz/Skill.img.xml` gained the five name/description entries.
 - `scripts/quest/20408.js` teaches the five skills when it advances a Thunder Breaker to
@@ -86,6 +92,10 @@ than by pasting the server's XML.
    - Right-click it → **Copy**.
    - Navigate to `1512.img → skill`, right-click → **Paste**.
    - Rename the pasted node to the new id, e.g. `15121000`.
+   - **Flash Jump only:** after pasting `4111006` as `15121004`, delete the `req` child
+     node inside it. It requires Hermit skill `4111005`, which a Thunder Breaker cannot
+     learn, and the client will gray the skill out if it stays. The other four have no
+     `req` node.
 4. Open `String.wz → Skill.img` and do the same for the five entries, copying e.g. the
    `5121000` entry, renaming it to `15121000`, and setting its `name` string. The five
    names are Maple Warrior, Sharp Eyes, Power Stance, Hero's Will and Flash Jump.

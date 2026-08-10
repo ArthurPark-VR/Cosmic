@@ -50,6 +50,7 @@ import net.server.task.CharacterAutosaverTask;
 import net.server.task.CharacterHpDecreaseTask;
 import net.server.task.FamilyDailyResetTask;
 import net.server.task.FishingTask;
+import net.server.task.GlobalBuffTask;
 import net.server.task.HiredMerchantTask;
 import net.server.task.MapOwnershipTask;
 import net.server.task.MountTirednessTask;
@@ -62,6 +63,7 @@ import net.server.task.WeddingReservationTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
+import server.GlobalBuffs;
 import server.Storage;
 import server.TimerManager;
 import server.maps.AbstractMapObject;
@@ -199,6 +201,7 @@ public class World {
     private ScheduledFuture<?> partySearchSchedule;
     private ScheduledFuture<?> timeoutSchedule;
     private ScheduledFuture<?> hpDecSchedule;
+    private ScheduledFuture<?> globalBuffSchedule;
 
     public World(int world, int flag, String eventmsg, int exprate, int droprate, int bossdroprate, int mesorate, int questrate, int travelrate, int fishingrate) {
         this.id = world;
@@ -242,6 +245,13 @@ public class World {
         partySearchSchedule = tman.register(new PartySearchTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         timeoutSchedule = tman.register(new TimeoutTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         hpDecSchedule = tman.register(new CharacterHpDecreaseTask(this), YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL, YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL);
+
+        if (GlobalBuffs.isEnabled()) {
+            long buffInterval = MINUTES.toMillis(YamlConfig.config.server.GLOBAL_BUFF_INTERVAL);
+            globalBuffSchedule = tman.register(new GlobalBuffTask(this), buffInterval, buffInterval);
+            log.info("Global buffs enabled on world {}, refreshing every {} min: {}", world,
+                    YamlConfig.config.server.GLOBAL_BUFF_INTERVAL, YamlConfig.config.server.GLOBAL_BUFF_SKILLS);
+        }
 
         if (YamlConfig.config.server.USE_FAMILY_SYSTEM) {
             long timeLeft = Server.getTimeLeftForNextDay();
@@ -1513,6 +1523,16 @@ public class World {
         }
     }
 
+    public void runGlobalBuffSchedule() {
+        if (!GlobalBuffs.isEnabled()) {
+            return;
+        }
+
+        for (Character chr : this.getPlayerStorage().getAllCharacters()) {
+            GlobalBuffs.apply(chr);
+        }
+    }
+
     public void runPetSchedule() {
         Map<Integer, Integer> deployedPets;
 
@@ -2208,6 +2228,11 @@ public class World {
         if(hpDecSchedule != null) {
             hpDecSchedule.cancel(false);
             hpDecSchedule = null;
+        }
+
+        if (globalBuffSchedule != null) {
+            globalBuffSchedule.cancel(false);
+            globalBuffSchedule = null;
         }
 
         players.disconnectAll();

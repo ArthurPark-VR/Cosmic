@@ -176,17 +176,20 @@ Changing Java source *does* require `--build`.
 ## Tweaking the server
 
 Rates live at the top of `config.yaml`, under the world you are playing on (world 0 is
-"Scania", the default). They are multipliers - `10` means 10x:
+"Scania", the default). They are multipliers - `5` means 5x:
 
 ```yaml
   - flag: 0
     server_message: Welcome to Scania!
     channels: 3
-    exp_rate: 10
-    meso_rate: 10
-    drop_rate: 10
-    boss_drop_rate: 10
+    exp_rate: 5
+    meso_rate: 3
+    drop_rate: 3
+    boss_drop_rate: 3
 ```
+
+`boss_drop_rate` replaces `drop_rate` for bosses rather than stacking with it, so it is
+kept in step with the drop rate above.
 
 Restart the server afterwards. Note that `channels: 3` matches the `7575-7577` range
 published in `docker-compose.yml` - if you raise the channel count, widen that range to
@@ -195,6 +198,40 @@ match, or the extra channels will not be reachable.
 This server also lifts the Cygnus level 120 cap and adds a Thunder Breaker 4th job. That
 one needs a matching edit to your client `.wz` files - see
 [thunder-breaker-4th-job.md](thunder-breaker-4th-job.md).
+
+### Global buffs
+
+Every player is kept permanently buffed, whatever their job or level:
+
+| Buff | Skill | Effect |
+| --- | --- | --- |
+| Hyper Body | `9101008` | +60% max HP and MP |
+| Bless | `9101003` | +20 att, +20 magic att, +100 def, +100 magic def, +100 acc, +100 avoid |
+| Holy Symbol | `9101002` | +50% experience per kill |
+| Haste | `9101001` | +40 speed, +20 jump |
+
+These are the GM versions, which are stronger than the player ones and work for any class.
+They are applied when you log in and refreshed every few minutes, since each one only lasts
+15 minutes on its own.
+
+```yaml
+    USE_GLOBAL_BUFFS: true
+    GLOBAL_BUFF_INTERVAL: 5
+    GLOBAL_BUFF_SKILLS:
+      - 9101008
+      - 9101003
+      - 9101002
+      - 9101001
+```
+
+Add or remove skill ids to change the set - each is applied at its max level, and anything
+that doesn't resolve is logged and skipped rather than breaking login. Set
+`USE_GLOBAL_BUFFS: false` to turn the whole thing off. Keep `GLOBAL_BUFF_INTERVAL` well
+under 15 or the buffs will lapse between refreshes.
+
+The buffs are applied directly rather than cast, which is what lets a normal character
+receive GM-only buffs - casting them would be rejected, but applying the effect never goes
+through that check.
 
 ## Your save data
 
