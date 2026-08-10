@@ -203,31 +203,45 @@ one needs a matching edit to your client `.wz` files - see
 
 Every player is kept permanently buffed, whatever their job or level:
 
-| Buff | Skill | Effect |
-| --- | --- | --- |
-| Hyper Body | `9101008` | +60% max HP and MP |
-| Bless | `9101003` | +20 att, +20 magic att, +100 def, +100 magic def, +100 acc, +100 avoid |
-| Holy Symbol | `9101002` | +50% experience per kill |
-| Haste | `9101001` | +40 speed, +20 jump |
+| Buff | Skill | Effect | Duration |
+| --- | --- | --- | --- |
+| Hyper Body | `9101008` | +60% max HP and MP | 15 min |
+| Bless | `9101003` | +20 att, +20 magic att, +100 def, +100 magic def, +100 acc, +100 avoid | 15 min |
+| Holy Symbol | `9101002` | +50% experience per kill | 15 min |
+| Haste | `9101001` | +40 speed, +20 jump | 15 min |
+| Power Stance | `1121002` | 90% knockback resistance | 5 min |
+| Sharp Eyes | `3121002` | +critical rate and damage | 5 min |
+| Maple Warrior | `5121000` | +15% to all stats | 15 min |
 
-These are the GM versions, which are stronger than the player ones and work for any class.
-They are applied when you log in and refreshed every few minutes, since each one only lasts
-15 minutes on its own.
+The first four are the GM versions, which are stronger than the player ones and work for
+any class. The last three stand in for the Thunder Breaker 4th job skills, so the kit is
+available without the job advancement or any client-side edit.
+
+Those three deliberately use the **original** skill ids rather than the custom `15121xxx`
+ones. The effects are identical, but the client already knows these, so their buff icons
+render and nothing depends on the edited `Skill.wz`.
 
 ```yaml
     USE_GLOBAL_BUFFS: true
-    GLOBAL_BUFF_INTERVAL: 5
+    GLOBAL_BUFF_INTERVAL: 3
     GLOBAL_BUFF_SKILLS:
       - 9101008
       - 9101003
       - 9101002
       - 9101001
+      - 1121002
+      - 3121002
+      - 5121000
 ```
 
 Add or remove skill ids to change the set - each is applied at its max level, and anything
 that doesn't resolve is logged and skipped rather than breaking login. Set
-`USE_GLOBAL_BUFFS: false` to turn the whole thing off. Keep `GLOBAL_BUFF_INTERVAL` well
-under 15 or the buffs will lapse between refreshes.
+`USE_GLOBAL_BUFFS: false` to turn the whole thing off.
+
+> [!IMPORTANT]
+> `GLOBAL_BUFF_INTERVAL` must stay comfortably below the **shortest** duration in the list,
+> not the longest. Power Stance and Sharp Eyes last only 5 minutes, so the interval is 3.
+> Leaving it at 5 would let them expire in the same moment the refresh fires.
 
 The buffs are applied directly rather than cast, which is what lets a normal character
 receive GM-only buffs - casting them would be rejected, but applying the effect never goes

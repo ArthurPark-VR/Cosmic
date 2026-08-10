@@ -203,18 +203,23 @@ server:
 
     #Global Buffs
     #Keeps a fixed set of buffs active on every player, regardless of job or level.
-    #Applied on login and refreshed on the interval below. The buffs themselves last 15
-    #minutes, so GLOBAL_BUFF_INTERVAL must stay comfortably under that or they will lapse.
-    #Skill ids are applied at their max level. Defaults are the GM versions, which are
-    #stronger than the player ones and work for any class:
-    #  9101008 Hyper Body    9101003 Bless    9101002 Holy Symbol    9101001 Haste (Super)
+    #Applied on login and refreshed on the interval below. Skills are applied at their max
+    #level. GLOBAL_BUFF_INTERVAL must stay comfortably below the SHORTEST duration in the
+    #list, or that buff will lapse between refreshes - the shortest here is 5 minutes.
     USE_GLOBAL_BUFFS: true
-    GLOBAL_BUFF_INTERVAL: 5             #Minutes between refreshes.
+    GLOBAL_BUFF_INTERVAL: 3             #Minutes between refreshes.
     GLOBAL_BUFF_SKILLS:
-      - 9101008
-      - 9101003
-      - 9101002
-      - 9101001
+      # GM versions - stronger than the player ones and valid for any class. 15 min each.
+      - 9101008                         #Hyper Body    +60% max HP/MP
+      - 9101003                         #Bless         +20 att/matk, +100 def/mdef/acc/avoid
+      - 9101002                         #Holy Symbol   +50% exp
+      - 9101001                         #Haste         +40 speed, +20 jump
+      # Stand-ins for the Thunder Breaker 4th job skills. These are the ORIGINAL ids, not
+      # the custom 15121xxx ones: identical effects, but the client already knows them, so
+      # the buff icons render and no client-side .wz edit is needed for these to work.
+      - 1121002                         #Power Stance  90% knockback resist.  5 min
+      - 3121002                         #Sharp Eyes    +crit rate and damage. 5 min
+      - 5121000                         #Maple Warrior +15% all stats.       15 min
 
     #Other configuration
     SHUTDOWNHOOK: true
