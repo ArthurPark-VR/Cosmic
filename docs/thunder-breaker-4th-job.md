@@ -1,7 +1,7 @@
 # Thunder Breaker 4th job (custom)
 
-This server lifts the level 120 cap on Cygnus Knights and adds a 4th job advancement for
-Thunder Breaker, with a small custom skill set.
+This server lifts the level 120 cap on Cygnus Knights and gives the Thunder Breaker 4th job
+an actual skill set. The advancement itself is vanilla v83 and is left alone - see below.
 
 This is a **custom change**, not vanilla v83 behaviour. It also requires a matching edit to
 your **client** `.wz` files - the server half alone is not enough.
@@ -10,14 +10,22 @@ your **client** `.wz` files - the server half alone is not enough.
 
 Worth knowing before you change anything, because the naming is misleading:
 
-- `Job.THUNDERBREAKER4` (job id **1512**) exists in the code, but only as a placeholder.
+- `Job.THUNDERBREAKER4` (job id **1512**) exists in the code and is reachable.
 - `Skill.wz/1512.img` exists too - as a 268-byte stub with a job-tab icon and an
   **empty** `skill` node. The same is true of every Cygnus 4th job (1112, 1212, 1312, 1412).
-- **No advancement leads to it.** The Thunder Breaker chain is quest `20105` → 1st job,
-  `20205` → 2nd, `20315` → 3rd, and then it stops.
+- **An advancement to it already exists**, at Lv. 120: the "Chief Knight of the Empress"
+  questline, `20400` → `20408`. Quest `20408` awards the Chief Knight medal (1142069) and
+  advances any Cygnus x511 job to x512.
 
-So v83 has a Cygnus 4th job in name only. Real Cygnus 4th job content arrived after
-Big Bang, well past this version.
+So v83 has the 4th job *advancement*, but the job it advances you into has **no skills** -
+every Cygnus 4th job skill list is empty. Real Cygnus 4th job skills arrived after Big Bang,
+well past this version. That gap is what this change fills.
+
+> [!WARNING]
+> Quest **20400**, the entry to that chain, requires job **1511** and has no prerequisite.
+> A Thunder Breaker who reaches 1512 by any other route (a custom NPC, `@job 1512`) can
+> never start it, and loses the whole chain along with the Chief Knight medal. That is why
+> the advancement is deliberately left where v83 put it, and Hawkeye does not perform one.
 
 ## The skills
 
@@ -53,7 +61,12 @@ Verified against the originals - the clones produce identical buff values at max
   is deliberately excluded, matching how Hermit and Night Walker Flash Jump are handled).
 - `wz/Skill.wz/1512.img.xml` now contains the five skill definitions.
 - `wz/String.wz/Skill.img.xml` gained the five name/description entries.
-- `scripts/npc/1101007.js` adds the advancement on Hawkeye.
+- `scripts/quest/20408.js` teaches the five skills when it advances a Thunder Breaker to
+  1512, granting master level on each. This is the existing v83 advancement - only the
+  skill grant is new.
+- `scripts/npc/1101007.js` is a recovery path on Hawkeye that hands out the same five
+  skills to a character who is already 1512 but missing them (typically after `@job 1512`).
+  It does **not** advance anyone, for the reason in the warning above.
 
 ## Client-side changes (you have to do these)
 
@@ -91,22 +104,33 @@ done, and its XML was generated from these same source skills.
 
 ## Getting the advancement in game
 
-Reach **Lv. 120** as a 3rd job Thunder Breaker (job 1511), then talk to **Hawkeye** on
-Ereve - the same NPC who handled your 3rd job advancement.
+Reach **Lv. 120** as a 3rd job Thunder Breaker (job 1511), then run the vanilla
+**"Chief Knight of the Empress"** questline, starting from **Neinheart** on Ereve:
 
-He will advance you to job 1512 and grant **master level** on all five skills. That last
-part matters: 4th job skills are normally capped by master level, which is raised with
-mastery books, and v83 has no books for skills that did not exist. Granting master level at
-the advancement stands in for them. The skills start at level 0, so you still have to spend
-SP on them - you earn plenty going from 120 to 200.
+`20400` Chasing the Knight's Target → `20401` Hunting the Zombies → `20402` Black Scale →
+`20403` Dragon Outcasts → `20404` The Stolen Egg → `20405` The Cave of the Black Witch →
+`20406` The Knight That Disappeared → `20407` The Curse of the Black Witch →
+`20408` Chief Knight of the Empress
 
-Hawkeye's existing 3rd job advancement is unaffected; that runs through the quest window
-(quest `20315`), not through talking to him.
+The final quest awards the Chief Knight medal, advances you to job 1512, and now also
+teaches the five skills with **master level** on each. That last part matters: 4th job
+skills are normally capped by master level, which is raised with mastery books, and v83 has
+no books for skills that did not exist. The skills start at level 0, so you still have to
+spend SP on them - you earn plenty going from 120 to 200.
 
-To test without levelling, use a GM character: `@job 1512` works, or `@level 120` first.
+**Do not skip the chain.** Quest 20400 requires job 1511, so advancing early with
+`@job 1512` permanently locks you out of it and the medal. If you do end up at 1512 without
+the skills, talk to Hawkeye and he will hand them over.
+
+To test the skills without running the chain, use a **separate** GM character:
+`@job 1512`, then talk to Hawkeye.
 
 ## Reverting
 
 Set `getMaxClassLevel()` back to `isCygnus() ? 120 : 200`, delete `scripts/npc/1101007.js`,
-and empty the `skill` node in `wz/Skill.wz/1512.img.xml`. Characters already advanced to
-1512 would need `@job 1511` to be put back into a valid state.
+drop the `teachSkill` block from `scripts/quest/20408.js`, and empty the `skill` node in
+`wz/Skill.wz/1512.img.xml`.
+
+Characters already at 1512 do **not** need to be reverted - that job is reachable in
+vanilla v83 through quest 20408, so they are in a legitimate state either way. They would
+simply have an empty 4th job skill tab again, as v83 intended.

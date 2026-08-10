@@ -1,21 +1,25 @@
 /* Author:          Cosmic (custom)
     NPC Name:       Hawkeye (1101007)
-    Description:    Thunder Breaker 4th job advancement.
+    Description:    Hands out the custom Thunder Breaker 4th job skills.
 
-    v83 ships job 1512 (THUNDERBREAKER4) as an empty placeholder - the job id exists but
-    Skill.wz/1512.img has no skills and no advancement path leads to it. This server adds
-    the advancement and a small 4th job skill set. See docs/thunder-breaker-4th-job.md.
+    This NPC deliberately does NOT perform the job advancement. v83 already advances Cygnus
+    Knights from 3rd to 4th job at Lv. 120, at the end of the "Chief Knight of the Empress"
+    questline (quest 20408, via Neinheart and Shinsoo on Ereve). Advancing anywhere else
+    would be a trap: quest 20400, the entry to that chain, requires job 1511, so a Thunder
+    Breaker who reached 1512 early could never start it and would lose the whole chain
+    along with the Chief Knight medal.
 
-    Hawkeye already handles the 3rd job advancement through quest 20315; that quest is
-    unaffected, since it is driven by the quest window rather than by talking to him.
+    Quest 20408 teaches these skills itself. This script only exists as a recovery path for
+    a character who reached 1512 without them - most obviously via the GM command @job 1512.
+
+    Hawkeye's own quests (20105, 20205, 20305, 20315, 20605, 20615, 2309) are unaffected:
+    those run through the quest window, which is handled by QuestActionHandler and never
+    consults NPC scripts. He had no NPC script at all before this one, and they worked.
 */
 
 var status = -1;
 
-var ADVANCE_LEVEL = 120;
-
 // [skill id, master level] - master level matches the level count in Skill.wz/1512.img.
-// Granting master level here stands in for the mastery books v83 has no items for.
 var SKILLS = [
     [15121000, 30],   // Maple Warrior
     [15121001, 30],   // Sharp Eyes
@@ -44,31 +48,31 @@ function action(mode, type, selection) {
     var jobId = cm.getJobId();
 
     if (status == 0) {
-        if (jobId == 1512) {
-            cm.sendOk("You already carry the Empress' final blessing, #h #. Go and make use of it.");
+        if (jobId != 1512) {
+            cm.sendOk("The sea has nothing more to teach you yet, #h #.\r\n\r\nWhen you reach #bLv. 120#k, speak with #bNeinheart#k - the Empress has a task that will decide whether you're fit to be named Chief Knight. Come back to me afterwards if the techniques don't take.");
             cm.dispose();
             return;
         }
-        if (jobId != 1511) {
-            cm.sendOk("The wind off the sea is restless today. Come speak with me once you've earned your place among the Advanced Knights.");
-            cm.dispose();
-            return;
-        }
-        if (cm.getPlayer().getLevel() < ADVANCE_LEVEL) {
-            cm.sendOk("Not yet, #h #. Shinsoo's power will only answer to someone who has reached #bLv. " + ADVANCE_LEVEL + "#k. Keep training.");
-            cm.dispose();
-            return;
-        }
-        cm.sendYesNo("So the sea finally answered you. Shinsoo has agreed to share what remains of her strength - it will open techniques no Knight of Cygnus has carried before.\r\n\r\nAre you ready to take them on?");
-    } else if (status == 1) {
-        var Job = Java.type('client.Job');
-        cm.getPlayer().changeJob(Job.THUNDERBREAKER4);
 
+        var missing = 0;
+        for (var i = 0; i < SKILLS.length; i++) {
+            if (cm.getPlayer().getMasterLevel(SKILLS[i][0]) < SKILLS[i][1]) {
+                missing++;
+            }
+        }
+
+        if (missing == 0) {
+            cm.sendOk("Shinsoo's strength is already yours, #h #. Spend your SP and put it to use.");
+            cm.dispose();
+            return;
+        }
+
+        cm.sendYesNo("Something didn't take hold when you were named Chief Knight. Shall I open the rest of Shinsoo's techniques to you?");
+    } else if (status == 1) {
         for (var i = 0; i < SKILLS.length; i++) {
             cm.teachSkill(SKILLS[i][0], 0, SKILLS[i][1], -1);
         }
-
-        cm.sendOk("It's done. Your limits are lifted - you may grow all the way to #bLv. 200#k now.\r\n\r\nYour new techniques are waiting in your skill window, but they're dormant until you spend SP on them. Go earn it.");
+        cm.sendOk("It's done. Your techniques are waiting in your skill window - they stay dormant until you spend SP on them.");
         cm.dispose();
     } else {
         cm.dispose();
