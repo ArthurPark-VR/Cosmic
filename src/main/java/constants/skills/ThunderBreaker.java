@@ -48,4 +48,11 @@ public class ThunderBreaker {
     public static final int ENERGY_DRAIN = 15111001;
     public static final int SPARK = 15111006;
     public static final int SHARK_WAVE = 15111007;
+    // 4th job - custom. v83 ships job 1512 as an empty placeholder, so these skills and their
+    // Skill.wz/String.wz entries are added by this server. See docs/thunder-breaker-4th-job.md.
+    public static final int MAPLE_WARRIOR = 15121000;
+    public static final int SHARP_EYES = 15121001;
+    public static final int STANCE = 15121002;
+    public static final int HEROS_WILL = 15121003;
+    public static final int FLASH_JUMP = 15121004;
 }

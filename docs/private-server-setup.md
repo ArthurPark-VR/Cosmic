@@ -117,6 +117,43 @@ registered automatically - that is `AUTOMATIC_REGISTER` in `config.yaml`, on by 
 The admin character logs in with hide mode enabled, so it looks almost invisible and mobs
 will not move. Type `@hide` in chat to toggle it off. `@commands` lists everything else.
 
+## GM character and Blessing of the Fairy
+
+The `admin` account already ships with what you need: a character named **Admin** at
+**GM level 6** (the highest tier), holding 1,000,000 NX credit and 1,000,000 maple points.
+So you do not have to create a GM character - you already have one.
+
+Useful commands once logged in as a GM (`@commands` lists them all):
+
+| Command | Does |
+| --- | --- |
+| `@item <id> <qty>` | spawn any item |
+| `@level <n>` / `@levelpro <n>` | set level |
+| `@job <id>` | change job |
+| `@maxstat`, `@maxskill` | max stats / skills |
+| `@buff`, `@heal` | self buffs and healing |
+| `@gmshop` | open the GM shop |
+| `!setgmlevel <name> <lvl>` | make another character a GM (level 0-6) |
+
+### Blessing of the Fairy
+
+This is the part worth understanding, because it is not what most people assume. The
+server computes it as (`Character.java`):
+
+```sql
+SELECT name, level FROM characters WHERE accountid = ? AND id != ? ORDER BY level DESC limit 1
+```
+
+It is simply **the highest-level *other* character on the same account**. Two consequences:
+
+- It does **not** need to be a GM character. Any second character on the account counts -
+  GM status just makes it fast to level one with `@level`.
+- The value is read **once, when the character loads**. After levelling your other
+  character, you must **log the first one out and back in** before the buff updates.
+
+So the setup you want is: level the `Admin` character up, then log in on your Thunder
+Breaker and it will carry Blessing of the Fairy from it.
+
 ## Day-to-day
 
 ```sh
@@ -154,6 +191,10 @@ Rates live at the top of `config.yaml`, under the world you are playing on (worl
 Restart the server afterwards. Note that `channels: 3` matches the `7575-7577` range
 published in `docker-compose.yml` - if you raise the channel count, widen that range to
 match, or the extra channels will not be reachable.
+
+This server also lifts the Cygnus level 120 cap and adds a Thunder Breaker 4th job. That
+one needs a matching edit to your client `.wz` files - see
+[thunder-breaker-4th-job.md](thunder-breaker-4th-job.md).
 
 ## Your save data
 

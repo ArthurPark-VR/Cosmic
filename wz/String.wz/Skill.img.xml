@@ -12714,4 +12714,139 @@
     <string name="desc" value="[Master Level : 1]\nBonus recovery gain from using map chairs throughout the world."/>
     <string name="h1" value="Passively recover extra amounts of HP and MP by resting on map chairs."/>
   </imgdir>
+  <imgdir name="15121000">
+    <string name="name" value="Maple Warrior"/>
+    <string name="desc" value="Increase all players&apos; stats within a party by certain percentage "/>
+    <string name="h1" value="MP - 10 ,  For 30Secs, all stats + 1% "/>
+    <string name="h2" value="MP - 10 ,  For 60Secs, all stats + 1% "/>
+    <string name="h3" value="MP - 10 ,  For 90Secs, all stats + 2% "/>
+    <string name="h4" value="MP - 10 ,  For 120Secs, all stats + 2% "/>
+    <string name="h5" value="MP - 10 ,  For 150Secs, all stats + 3% "/>
+    <string name="h6" value="MP - 20 ,  For 180Secs, all stats + 3% "/>
+    <string name="h7" value="MP - 20 ,  For 210Secs, all stats + 4% "/>
+    <string name="h8" value="MP - 20 ,  For 240Secs, all stats + 4% "/>
+    <string name="h9" value="MP - 20 ,  For 270Secs, all stats + 5% "/>
+    <string name="h10" value="MP - 20 ,  For 300Secs, all stats + 5% "/>
+    <string name="h11" value="MP - 30 ,  For 330Secs, all stats + 6% "/>
+    <string name="h12" value="MP - 30 ,  For 360Secs, all stats + 6% "/>
+    <string name="h13" value="MP - 30 ,  For 390Secs, all stats + 7% "/>
+    <string name="h14" value="MP - 30 ,  For 420Secs, all stats + 7% "/>
+    <string name="h15" value="MP - 30 ,  For 450Secs, all stats + 8% "/>
+    <string name="h16" value="MP - 40 ,  For 480Secs, all stats + 8% "/>
+    <string name="h17" value="MP - 40 ,  For 510Secs, all stats + 9% "/>
+    <string name="h18" value="MP - 40 ,  For 540Secs, all stats + 9% "/>
+    <string name="h19" value="MP - 40 ,  For 570Secs, all stats + 10% "/>
+    <string name="h20" value="MP - 40 ,  For 600Secs, all stats + 10% "/>
+    <string name="h21" value="MP - 50 ,  For 630Secs, all stats + 11% "/>
+    <string name="h22" value="MP - 50 ,  For 660Secs, all stats + 11% "/>
+    <string name="h23" value="MP - 50 ,  For 690Secs, all stats + 12% "/>
+    <string name="h24" value="MP - 50 ,  For 720Secs, all stats + 12% "/>
+    <string name="h25" value="MP - 50 ,  For 750Secs, all stats + 13% "/>
+    <string name="h26" value="MP - 60 ,  For 780Secs, all stats + 13% "/>
+    <string name="h27" value="MP - 60 ,  For 810Secs, all stats + 14% "/>
+    <string name="h28" value="MP - 60 ,  For 840Secs, all stats + 14% "/>
+    <string name="h29" value="MP - 60 ,  For 870Secs, all stats + 15% "/>
+    <string name="h30" value="MP - 60 ,  For 900Secs, all stats + 15% "/>
+    </imgdir>
+  <imgdir name="15121001">
+    <string name="name" value="Sharp Eyes"/>
+    <string name="desc" value="Grants party members the ability to locate enemy weaknesses, and in turn inflict more damage by exploiting them."/>
+    <string name="h1" value="MP - 29 , for 10secs , Critical rate 1%, Damage + 11% ."/>
+    <string name="h2" value="MP - 29 , for 20secs , Critical rate 1%, Damage + 12% ."/>
+    <string name="h3" value="MP - 29 , for 30secs , Critical rate 2%, Damage + 13% ."/>
+    <string name="h4" value="MP - 29 , for 40secs , Critical rate 2%, Damage + 14% ."/>
+    <string name="h5" value="MP - 29 , for 50secs , Critical rate 3%, Damage + 15% ."/>
+    <string name="h6" value="MP - 29 , for 60secs , Critical rate 3%, Damage + 16% ."/>
+    <string name="h7" value="MP - 29 , for 70secs , Critical rate 4%, Damage + 17% ."/>
+    <string name="h8" value="MP - 29 , for 80secs , Critical rate 4%, Damage + 18% ."/>
+    <string name="h9" value="MP - 29 , for 90secs , Critical rate 5%, Damage + 19% ."/>
+    <string name="h10" value="MP - 29 , for 100secs , Critical rate 5%, Damage + 20% ."/>
+    <string name="h11" value="MP - 37 , for 110secs , Critical rate 6%, Damage + 21% ."/>
+    <string name="h12" value="MP - 37 , for 120secs , Critical rate 6%, Damage + 22% ."/>
+    <string name="h13" value="MP - 37 , for 130secs , Critical rate 7%, Damage + 23% ."/>
+    <string name="h14" value="MP - 37 , for 140secs , Critical rate 7%, Damage + 24% ."/>
+    <string name="h15" value="MP - 37 , for 150secs , Critical rate 8%, Damage + 25% ."/>
+    <string name="h16" value="MP - 37 , for 160secs , Critical rate 8%, Damage + 26% ."/>
+    <string name="h17" value="MP - 37 , for 170secs , Critical rate 9%, Damage + 27% ."/>
+    <string name="h18" value="MP - 37 , for 180secs , Critical rate 9%, Damage + 28% ."/>
+    <string name="h19" value="MP - 37 , for 190secs , Critical rate 10%, Damage + 29% ."/>
+    <string name="h20" value="MP - 37 , for 200secs , Critical rate 10%, Damage + 30% ."/>
+    <string name="h21" value="MP - 45 , for 210secs , Critical rate 11%, Damage + 31% ."/>
+    <string name="h22" value="MP - 45 , for 220secs , Critical rate 11%, Damage + 32% ."/>
+    <string name="h23" value="MP - 45 , for 230secs , Critical rate 12%, Damage + 33% ."/>
+    <string name="h24" value="MP - 45 , for 240secs , Critical rate 12%, Damage + 34% ."/>
+    <string name="h25" value="MP - 45 , for 250secs , Critical rate 13%, Damage + 35% ."/>
+    <string name="h26" value="MP - 44 , for 260secs , Critical rate 13%, Damage + 36% ."/>
+    <string name="h27" value="MP - 43 , for 270secs , Critical rate 14%, Damage + 37% ."/>
+    <string name="h28" value="MP - 42 , for 280secs , Critical rate 14%, Damage + 38% ."/>
+    <string name="h29" value="MP - 41 , for 290secs , Critical rate 15%, Damage + 39% ."/>
+    <string name="h30" value="MP - 40 , for 300secs , Critical rate 15%, Damage + 40% ."/>
+    </imgdir>
+  <imgdir name="15121002">
+    <string name="name" value="Power Stance"/>
+    <string name="desc" value="Enables one to stay at the same spot after being struck, resisting knock-back effects."/>
+    <string name="h1" value="MP - 30 ,For 10secs, prevent from getting knock-backed  with success rate  42%."/>
+    <string name="h2" value="MP - 30 ,For 20Secs, prevent from getting Knock-backed with success rate 44%."/>
+    <string name="h3" value="MP - 30 ,For 30Secs, prevent from getting Knock-backed with success rate 46%."/>
+    <string name="h4" value="MP - 30 ,For 40Secs, prevent from getting Knock-backed with success rate 48%."/>
+    <string name="h5" value="MP - 30 ,For 50Secs, prevent from getting Knock-backed with success rate 50%."/>
+    <string name="h6" value="MP - 36 ,For 60Secs, prevent from getting Knock-backed with success rate 52%."/>
+    <string name="h7" value="MP - 36 ,For 70Secs, prevent from getting Knock-backed with success rate 54%."/>
+    <string name="h8" value="MP - 36 ,For 80Secs, prevent from getting Knock-backed with success rate 56%."/>
+    <string name="h9" value="MP - 36 ,For 90Secs, prevent from getting Knock-backed with success rate 58%."/>
+    <string name="h10" value="MP - 36 ,For 100Secs, prevent from getting Knock-backed with success rate 60%."/>
+    <string name="h11" value="MP - 42 ,For 110Secs, prevent from getting Knock-backed with success rate 62%."/>
+    <string name="h12" value="MP - 42 ,For 120Secs, prevent from getting Knock-backed with success rate 64%."/>
+    <string name="h13" value="MP - 42 ,For 130Secs, prevent from getting Knock-backed with success rate 66%."/>
+    <string name="h14" value="MP - 42 ,For 140Secs, prevent from getting Knock-backed with success rate 68%."/>
+    <string name="h15" value="MP - 42 ,For 150Secs, prevent from getting Knock-backed with success rate 70%."/>
+    <string name="h16" value="MP - 48 ,For 160Secs, prevent from getting Knock-backed with success rate 72%."/>
+    <string name="h17" value="MP - 48 ,For 170Secs, prevent from getting Knock-backed with success rate 74%."/>
+    <string name="h18" value="MP - 48 ,For 180Secs, prevent from getting Knock-backed with success rate 76%."/>
+    <string name="h19" value="MP - 48 ,For 190Secs, prevent from getting Knock-backed with success rate 78%."/>
+    <string name="h20" value="MP - 48 ,For 200Secs, prevent from getting Knock-backed with success rate 80%."/>
+    <string name="h21" value="MP - 54 ,For 210Secs, prevent from getting Knock-backed with success rate 81%."/>
+    <string name="h22" value="MP - 54 ,For 220Secs, prevent from getting Knock-backed with success rate 82%."/>
+    <string name="h23" value="MP - 54 ,For 230Secs, prevent from getting Knock-backed with success rate 83%."/>
+    <string name="h24" value="MP - 54 ,For 240Secs, prevent from getting Knock-backed with success rate 84%."/>
+    <string name="h25" value="MP - 54 ,For 250Secs, prevent from getting Knock-backed with success rate 85%."/>
+    <string name="h26" value="MP - 53 ,For 260Secs, prevent from getting Knock-backed with success rate 86%."/>
+    <string name="h27" value="MP - 52 ,For 270Secs, prevent from getting Knock-backed with success rate 87%."/>
+    <string name="h28" value="MP - 51 ,For 280Secs, prevent from getting Knock-backed with success rate 88%."/>
+    <string name="h29" value="MP - 50 ,For 290Secs, prevent from getting Knock-backed with success rate 89%."/>
+    <string name="h30" value="MP - 50 ,For 300Secs, prevent from getting Knock-backed with success rate 90%."/>
+    </imgdir>
+  <imgdir name="15121003">
+    <string name="name" value="Hero's Will"/>
+    <string name="desc" value="Enables one to shrug off abnormal conditions. The higher the skill level, the more types of abnormal conditions one can nullify."/>
+    <string name="h1" value="MP - 30 escape from abnormal condition, Terms between skills 600secs"/>
+    <string name="h2" value="MP - 30 escape from abnormal condition, Terms between skills 540secs"/>
+    <string name="h3" value="MP - 30 escape from abnormal condition, Terms between skills 480secs"/>
+    <string name="h4" value="MP - 30 escape from abnormal condition, Terms between skills 420secs"/>
+    <string name="h5" value="MP - 30 escape from abnormal condition, Terms between skills 360secs"/>
+    </imgdir>
+  <imgdir name="15121004">
+    <string name="name" value="Flash Jump"/>
+    <string name="desc" value="[Master Level : 20]\nAllows a second Jump toward the direction which the character was headed when used while the character is in the air. The distance of the Jump increases in accordance with the advancement of the character’s skill level."/>
+    <string name="h1" value="MP - 60, Jumps a pre-established distance"/>
+    <string name="h2" value="MP - 57, Jumps a pre-established distance"/>
+    <string name="h3" value="MP - 54, Jumps a pre-established distance"/>
+    <string name="h4" value="MP - 51, Jumps a pre-established distance"/>
+    <string name="h5" value="MP - 48, Jumps a pre-established distance"/>
+    <string name="h6" value="MP - 45, Jumps a pre-established distance"/>
+    <string name="h7" value="MP - 42, Jumps a pre-established distance"/>
+    <string name="h8" value="MP - 39, Jumps a pre-established distance"/>
+    <string name="h9" value="MP - 36, Jumps a pre-established distance"/>
+    <string name="h10" value="MP - 33, Jumps a pre-established distance"/>
+    <string name="h11" value="MP - 31, Jumps a pre-established distance"/>
+    <string name="h12" value="MP - 29, Jumps a pre-established distance"/>
+    <string name="h13" value="MP - 27, Jumps a pre-established distance"/>
+    <string name="h14" value="MP - 25, Jumps a pre-established distance"/>
+    <string name="h15" value="MP - 23, Jumps a pre-established distance"/>
+    <string name="h16" value="MP - 21, Jumps a pre-established distance"/>
+    <string name="h17" value="MP - 19, Jumps a pre-established distance"/>
+    <string name="h18" value="MP - 17, Jumps a pre-established distance"/>
+    <string name="h19" value="MP - 15, Jumps a pre-established distance"/>
+    <string name="h20" value="MP - 13, Jumps a pre-established distance"/>
+    </imgdir>
 </imgdir>
