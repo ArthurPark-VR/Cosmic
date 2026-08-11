@@ -201,6 +201,18 @@ server:
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
     GMSERVER: false
 
+    #Command Access
+    #Floor applied to every character's GM level as it loads, so it covers characters that
+    #already exist as well as new ones. A character's stored level is used if it is higher,
+    #so this never demotes anyone.
+    #The command tiers are named, in order: 0 Common, 1 Donator, 2 JrGM, 3 GM, 4 SuperGM,
+    #5 Developer, 6 Admin. Tier 1 "Donator" grants @goto, @buffme, @whodrops and
+    #@whatdropsfrom.
+    #Note that isGM() is defined as level > 1, so tier 1 is NOT treated as a GM anywhere -
+    #no auto-hide, no trade/storage/drop restrictions, no admin flag, and skill job-tree
+    #checks still apply as normal. Set to 0 for vanilla behaviour.
+    MINIMUM_GM_LEVEL: 1
+
     #Global Buffs
     #Keeps a fixed set of buffs active on every player, regardless of job or level.
     #Applied on login and refreshed on the interval below. Skills are applied at their max

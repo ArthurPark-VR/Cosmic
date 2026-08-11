@@ -6764,7 +6764,7 @@ public class Character extends AbstractCharacterObject {
             ret.gachaexp.set(rs.getInt("gachaexp"));
             ret.mapid = rs.getInt("map");
             ret.initialSpawnPoint = rs.getInt("spawnpoint");
-            ret.setGMLevel(rs.getInt("gm"));
+            ret.setGMLevel(Math.max(rs.getInt("gm"), YamlConfig.config.server.MINIMUM_GM_LEVEL));
             ret.world = rs.getByte("world");
             ret.rank = rs.getInt("rank");
             ret.rankMove = rs.getInt("rankMove");
@@ -6884,7 +6884,7 @@ public class Character extends AbstractCharacterObject {
                     ret.loadCharSkillPoints(rs.getString("sp").split(","));
                     ret.meso.set(rs.getInt("meso"));
                     ret.merchantmeso = rs.getInt("MerchantMesos");
-                    ret.setGMLevel(rs.getInt("gm"));
+                    ret.setGMLevel(Math.max(rs.getInt("gm"), YamlConfig.config.server.MINIMUM_GM_LEVEL));
                     ret.skinColor = SkinColor.getById(rs.getInt("skincolor"));
                     ret.gender = rs.getInt("gender");
                     ret.job = Job.getById(rs.getInt("job"));

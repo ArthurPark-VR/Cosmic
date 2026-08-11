@@ -50,6 +50,9 @@ public class ServerConfig {
     public String LOCALHOST;
     public boolean GMSERVER;
 
+    //Command Access
+    public int MINIMUM_GM_LEVEL;
+
     //Global Buffs
     public boolean USE_GLOBAL_BUFFS;
     public int GLOBAL_BUFF_INTERVAL;
