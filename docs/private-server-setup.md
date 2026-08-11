@@ -285,21 +285,84 @@ it in `docker-compose.yml`.
 **Wiping and starting fresh** - `docker compose down`, delete `database/docker-db-data/`,
 then `docker compose up`.
 
-## Opening it up to other people later
+## Playing with friends
 
-This setup is deliberately loopback-only. If you later want friends to connect, you would
-need to:
+Nothing here is required for solo play. This is the whole picture for letting a handful of
+people in, without putting the server on the open internet.
 
-1. Remove the `127.0.0.1:` prefixes from the port mappings in `docker-compose.yml`.
-2. Set `HOST` in `config.yaml` to your public IP (this is the address the login server
-   hands back to clients when they pick a channel).
-3. Forward ports 8484 and 7575-7577 on your router.
-4. Hex-edit the client's IP for each person you give it to - see "Edit client ip" in the
-   client repo's README.
-5. Set a real database password (`DB_PASS` in `config.yaml`, `MYSQL_ROOT_PASSWORD` in
-   `docker-compose.yml`) and stop publishing port 3307. The empty password is only
-   acceptable while nothing outside your machine can reach it.
+### Pick how they reach you
 
-Consider whether you want `AUTOMATIC_REGISTER` left on at that point, since it lets anyone
-who can reach the login screen create an account. The upstream project does not support
-public servers - you would be doing this at your own risk.
+**A private network (recommended).** Install [Tailscale](https://tailscale.com/) (or
+ZeroTier) on your machine and on each friend's. Everyone gets a stable private address, and
+your server is reachable only by people you've invited. No router configuration, no ports
+open to the world, and nothing to re-do when your home IP changes. For a group of friends
+this is strictly better than the alternative.
+
+**Port forwarding.** Forward 8484 and 7575-7577 on your router to your machine and hand out
+your public IP. This genuinely exposes the login server to the internet - anyone who finds
+the port can reach the login screen. If you go this way, do the hardening below properly,
+and expect to redistribute clients whenever your IP changes.
+
+### What to change on the server
+
+1. Drop the `127.0.0.1:` prefixes from the game port mappings in `docker-compose.yml` so
+   they listen on all interfaces:
+
+   ```yaml
+         - "8484:8484"
+         - "7575-7577:7575-7577"
+   ```
+
+   Leave the database mapping alone, or better, delete it - see hardening.
+
+2. Set the address in `config.yaml`. Which of the three the server uses depends on where
+   the player is connecting from:
+
+   | Player is... | Server sees | Uses |
+   | --- | --- | --- |
+   | you, through Docker | `172.x` | `LANHOST` |
+   | a friend on your home wifi | `192.168.x` / `10.x` | `LANHOST` |
+   | a friend over VPN | `100.x` | `HOST` |
+   | a friend over the internet | public ip | `HOST` |
+
+   The simplest correct answer is to set **all three to the same address** - your Tailscale
+   address, or your public IP. Your own client reaches it fine either way.
+
+   ```yaml
+       HOST: 100.x.x.x
+       LANHOST: 100.x.x.x
+       LOCALHOST: 100.x.x.x
+   ```
+
+3. Restart. `docker compose down && docker compose up`.
+
+### What to give your friends
+
+Each person needs the client, the `cosmic-wz` files, and a client **hex-edited to point at
+your address** - see "Edit client ip" in the client repo's README. Easiest is to edit one
+copy yourself and hand out that exact file, so nobody has to touch a hex editor.
+
+### Hardening before anyone else connects
+
+- **Database password.** `DB_PASS` in `config.yaml` and `MYSQL_ROOT_PASSWORD` in
+  `docker-compose.yml`. Empty is only defensible while nothing outside your machine can
+  reach it. Also delete the `3307` port mapping entirely - you can still reach the database
+  with `docker compose exec db mysql -uroot -p cosmic`.
+- **`AUTOMATIC_REGISTER`.** On by default: anyone who reaches the login screen creates an
+  account by typing a new username. Behind a VPN that is fine. Exposed to the internet it
+  is not - turn it off and create accounts yourself.
+- **`MINIMUM_GM_LEVEL`.** Currently `1`, so *every* character becomes a Donator with
+  `@goto`, `@buffme`, `@whodrops` and `@whatdropsfrom`. Harmless among friends, but decide
+  deliberately rather than by accident. Set to `0` to keep it to yourself.
+- **Back up first.** Everything lives in `database/docker-db-data`. More players means more
+  to lose.
+
+### Things that will apply to everyone
+
+Your rates (5x/3x/3x) and the global buffs are server-wide, so your friends get them too.
+`CHANNEL_LOAD` is 100 per channel across 3 channels, which is far beyond anything a group
+of friends will need.
+
+The upstream project explicitly does not support public servers, and you would be doing
+this at your own risk. For an invite-only group over a private network, that risk is mostly
+about your own machine rather than anyone else's.
