@@ -53,6 +53,10 @@ public class ServerConfig {
     //Command Access
     public int MINIMUM_GM_LEVEL;
 
+    //Monster Skills
+    // Names from MobSkillType. Parsed and validated by MobSkill.
+    public List<String> DISABLED_MOB_SKILLS;
+
     //Global Buffs
     public boolean USE_GLOBAL_BUFFS;
     public int GLOBAL_BUFF_INTERVAL;

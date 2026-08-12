@@ -201,6 +201,19 @@ server:
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
     GMSERVER: false
 
+    #Monster Skills
+    #Mob skills listed here never take effect - the monster still uses the skill and plays
+    #its animation, but nothing is applied to the player. Names come from MobSkillType;
+    #anything unrecognised is logged and ignored rather than breaking the mob.
+    #DISPEL is worth blocking on a server with global buffs, since one cast strips them
+    #until the next refresh. SEDUCE takes away control of your character.
+    #Other names you may want: STUN, SEAL, CURSE, DARKNESS, WEAKNESS, SLOW, POISON,
+    #BANISH, REVERSE_INPUT, UNDEAD, FEAR, STOP_POTION, STOP_MOTION, SEAL_SKILL.
+    #Leave the list empty for vanilla behaviour.
+    DISABLED_MOB_SKILLS:
+      - DISPEL
+      - SEDUCE
+
     #Command Access
     #Floor applied to every character's GM level as it loads, so it covers characters that
     #already exist as well as new ones. A character's stored level is used if it is higher,

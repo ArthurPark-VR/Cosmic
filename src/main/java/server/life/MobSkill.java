@@ -24,6 +24,7 @@ package server.life;
 import client.Character;
 import client.Disease;
 import client.status.MonsterStatus;
+import config.YamlConfig;
 import constants.id.MapId;
 import constants.id.MobId;
 import constants.skills.Bishop;
@@ -41,14 +42,58 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Danny (Leifde)
  */
 public class MobSkill {
     private static final Logger log = LoggerFactory.getLogger(MobSkill.class);
+
+    /**
+     * Mob skill types that never take effect, from DISABLED_MOB_SKILLS in config.yaml.
+     * Resolved once on first use; unknown names are logged and skipped rather than
+     * stopping the rest of the list from loading.
+     */
+    private static volatile Set<MobSkillType> disabledTypes;
+
+    private static Set<MobSkillType> getDisabledTypes() {
+        Set<MobSkillType> cached = disabledTypes;
+        if (cached != null) {
+            return cached;
+        }
+
+        synchronized (MobSkill.class) {
+            if (disabledTypes != null) {
+                return disabledTypes;
+            }
+
+            Set<MobSkillType> types = EnumSet.noneOf(MobSkillType.class);
+            List<String> configured = YamlConfig.config.server.DISABLED_MOB_SKILLS;
+            if (configured != null) {
+                for (String entry : configured) {
+                    if (entry == null || entry.isBlank()) {
+                        continue;
+                    }
+                    try {
+                        types.add(MobSkillType.valueOf(entry.trim().toUpperCase()));
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Ignoring disabled mob skill '{}' - not a MobSkillType.", entry);
+                    }
+                }
+            }
+
+            if (!types.isEmpty()) {
+                log.info("Mob skills disabled: {}", types);
+            }
+
+            disabledTypes = types;
+            return types;
+        }
+    }
 
     private final MobSkillId id;
     private final int mpCon;
@@ -195,6 +240,12 @@ public class MobSkill {
     public void applyEffect(Character player, Monster monster, boolean skill, List<Character> banishPlayersOutput) {
         // See if the MobSkill is successful before doing anything
         if (!makeChanceResult()) {
+            return;
+        }
+
+        // Blocked here rather than at the cast site, so the monster still uses the skill and
+        // plays its animation - only the effect on the player is dropped.
+        if (getDisabledTypes().contains(id.type())) {
             return;
         }
 
