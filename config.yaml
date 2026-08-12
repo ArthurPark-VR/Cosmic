@@ -309,7 +309,14 @@ server:
 
     #Events/PQs Configuration
     USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.
-    USE_ENABLE_SOLO_EXPEDITIONS: false    #Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
+    #Lets expeditions start with any number of players - the minimum party size becomes 1
+    #instead of 6 for Zakum, Horntail, Pinkbean, Scarga and CWKPQ (3 for Balrog Easy and
+    #Showa, 2 for Ariant). It also unlocks the two gates that need other people:
+    #  - talking to the El Nath chief completes the Zakum prequest (quest 100201), so the
+    #    Dead Mine chain is skipped. No other quest is touched.
+    #  - Horntail accepts the 3 component certificates (4001083/4/5) in place of the
+    #    Certificate of the Dragon Squad, so only the final group step is skipped.
+    USE_ENABLE_SOLO_EXPEDITIONS: true     #Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
     USE_ENABLE_DAILY_EXPEDITIONS: false  #Enables daily entry limitations in expeditions.
     USE_ENABLE_RECALL_EVENT: false        #Enables a disconnected player to reaccess the last event instance they were in before logging out. Recall only works if the event isn't cleared or disposed yet. Suggestion thanks to Alisson (Goukken).
 
