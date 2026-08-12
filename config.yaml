@@ -172,7 +172,11 @@ server:
     CHANNEL_LOAD: 100                   #Max players per channel (limit actually used to calculate the World server capacity).
     CHANNEL_LOCKS: 20                   #Total number of structure management locks each channel has.
 
-    RESPAWN_INTERVAL: 10000             #10 seconds, 10000.
+    RESPAWN_INTERVAL: 3000              #3 seconds. Default is 10000. How often the respawn task
+                                        #tops maps back up to full spawn density. Individual spawn
+                                        #points still honour their own mobTime cooldown from the
+                                        #map data, so some maps will refill slower than this.
+                                        #Also governs Monster Carnival respawns.
     PURGING_INTERVAL: 300000            #5 minutes, 300000.
     RANKING_INTERVAL: 3600000           #60 minutes, 3600000.
     COUPON_INTERVAL: 3600000            #60 minutes, 3600000.
