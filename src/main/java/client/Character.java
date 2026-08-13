@@ -195,6 +195,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Character extends AbstractCharacterObject {
     private static final Logger log = LoggerFactory.getLogger(Character.class);
+    private static final long ENERGY_CHARGE_REFRESH_MS = 10_000;    // see handleEnergyChargeGain
     private static final String LEVEL_200 = "[Congrats] %s has reached Level %d! Congratulate %s on such an amazing achievement!";
     private static final String[] BLOCKED_NAMES = {"admin", "owner", "moderator", "intern", "donor", "administrator", "FREDRICK", "help", "helper", "alert", "notice", "maplestory", "fuck", "wizet", "fucking", "negro", "fuk", "fuc", "penis", "pussy", "asshole", "gay",
             "nigger", "homo", "suck", "cum", "shit", "shitty", "condom", "security", "official", "rape", "nigga", "sex", "tit", "boner", "orgy", "clit", "asshole", "fatass", "bitch", "support", "gamemaster", "cock", "gaay", "gm",
@@ -213,6 +214,7 @@ public class Character extends AbstractCharacterObject {
     private int messengerposition = 4;
     private int slots = 0;
     private int energybar;
+    private long lastEnergyChargeRefresh;
     private int gmLevel;
     private int ci = 0;
     private FamilyEntry familyEntry;
@@ -6015,8 +6017,9 @@ public class Character extends AbstractCharacterObject {
         StatEffect ceffect;
         ceffect = energycharge.getEffect(getSkillLevel(energycharge));
         TimerManager tMan = TimerManager.getInstance();
+        final boolean permanent = YamlConfig.config.server.PERMANENT_ENERGY_CHARGE;
         if (energybar < 10000) {
-            energybar += 102;
+            energybar += permanent ? 10000 : 102;   // permanent mode: the first hit fills the bar
             if (energybar > 10000) {
                 energybar = 10000;
             }
@@ -6027,9 +6030,22 @@ public class Character extends AbstractCharacterObject {
             getMap().broadcastPacket(this, PacketCreator.showBuffEffect(id, energycharge.getId(), 2));
             getMap().broadcastPacket(this, PacketCreator.giveForeignPirateBuff(id, energycharge.getId(),
                     ceffect.getDuration(), stat));
+        } else if (permanent && energybar == 15000
+                && System.currentTimeMillis() - lastEnergyChargeRefresh >= ENERGY_CHARGE_REFRESH_MS) {
+            // Nothing expires the charge server-side any more, but re-assert it on a slow cadence
+            // so a client-side timer can't quietly drop the charged state mid-fight. Buff packet
+            // only - replaying the effect animation every few seconds would be visual noise.
+            lastEnergyChargeRefresh = System.currentTimeMillis();
+            List<Pair<BuffStat, Integer>> stat = Collections.singletonList(new Pair<>(BuffStat.ENERGY_CHARGE, 10000));
+            setBuffedValue(BuffStat.ENERGY_CHARGE, 10000);
+            sendPacket(PacketCreator.giveBuff(10000, 0, stat));
         }
         if (energybar >= 10000 && energybar < 11000) {
             energybar = 15000;
+            lastEnergyChargeRefresh = System.currentTimeMillis();
+            if (permanent) {
+                return;     // no teardown task: the bar stays charged for the rest of the session
+            }
             final Character chr = this;
             tMan.schedule(new Runnable() {
                 @Override

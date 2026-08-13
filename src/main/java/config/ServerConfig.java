@@ -64,6 +64,9 @@ public class ServerConfig {
     // default, so this parses predictably. GlobalBuffs converts and validates them.
     public List<String> GLOBAL_BUFF_SKILLS;
 
+    //Pirate Energy Charge
+    public boolean PERMANENT_ENERGY_CHARGE;
+
     //Other configuration
     public boolean SHUTDOWNHOOK;
 

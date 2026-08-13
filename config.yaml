@@ -250,6 +250,14 @@ server:
       - 3121002                         #Sharp Eyes    +crit rate and damage. 5 min
       - 5121000                         #Maple Warrior +15% all stats.       15 min
 
+    #Pirate Energy Charge
+    #Vanilla: each monster hit adds 102 to a 10000 bar, so the bar needs 99 hits to fill, and
+    #once full it drains completely after the skill's duration (40s at level 10, 50s at 20).
+    #Against a boss there is only one target per swing, so it refills at the slowest possible
+    #rate right where it matters most. With this on, the first hit fills the bar and the charge
+    #never drains for the rest of the session. Applies to Thunder Breaker and Marauder alike.
+    PERMANENT_ENERGY_CHARGE: true
+
     #Other configuration
     SHUTDOWNHOOK: true
 
