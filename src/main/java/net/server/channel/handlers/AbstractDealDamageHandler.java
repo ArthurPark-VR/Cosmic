@@ -717,7 +717,10 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
         if (chr.getEnergyBar() == 15000) {
             int energycharge = chr.isCygnus() ? ThunderBreaker.ENERGY_CHARGE : Marauder.ENERGY_CHARGE;
             StatEffect ceffect = SkillFactory.getSkill(energycharge).getEffect(chr.getSkillLevel(energycharge));
-            calcDmgMax *= (100 + ceffect.getDamage()) / 100;
+            // Divide after multiplying: "*= (100 + damage) / 100" truncates the ratio to an int
+            // first, so any Energy Charge damage value that isn't a multiple of 100 lost its
+            // remainder (70 -> 1x instead of 1.7x), understating the damage ceiling.
+            calcDmgMax = calcDmgMax * (100 + ceffect.getDamage()) / 100;
         }
 
         int bonusDmgBuff = 100;
