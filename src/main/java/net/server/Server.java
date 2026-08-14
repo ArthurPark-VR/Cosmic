@@ -937,6 +937,12 @@ public class Server {
 
         log.info("Listening on port 8484");
 
+        // Printed so a running server can be checked against its config without guessing: a stale
+        // image (config changed but no --build) and a config.yaml missing the key both land here
+        // as "disabled", which is otherwise silent - yamlbeans leaves an absent boolean false.
+        log.info("Permanent Energy Charge: {}",
+                YamlConfig.config.server.PERMANENT_ENERGY_CHARGE ? "enabled" : "disabled");
+
         online = true;
         Duration initDuration = Duration.between(beforeInit, Instant.now());
         log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
