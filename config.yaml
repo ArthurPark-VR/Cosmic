@@ -258,19 +258,6 @@ server:
     #never drains for the rest of the session. Applies to Thunder Breaker and Marauder alike.
     PERMANENT_ENERGY_CHARGE: true
 
-    #Summon Critical Hits
-    #v83 summons cannot crit at all: Skill.wz has no crit field for them, and SummonDamageHandler
-    #clamps summon damage to a ceiling computed without any crit allowance - unlike normal attacks,
-    #which only log when they exceed it. So a crit has to be applied server-side. It runs AFTER the
-    #anti-cheat clamp, meaning packet editing is still caught and the crit lands on top.
-    #Applies to EVERY summon (Storm, Silver Hawk, Ifrit, Octopus...), not just one class.
-    #Note: the summon attack packet is broadcast before damage is processed, using the client's own
-    #numbers, so the floating damage text shows the pre-crit value while the monster takes the full
-    #amount. Raise the summon's `pad` in Skill.wz instead if you want the display to match.
-    USE_SUMMON_CRIT: true
-    SUMMON_CRIT_RATE: 100               #Percent chance to crit. 100 = every hit.
-    SUMMON_CRIT_DAMAGE: 300             #Percent damage on a crit. 100 = no bonus, 300 = triple.
-
     #Other configuration
     SHUTDOWNHOOK: true
 

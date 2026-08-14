@@ -67,11 +67,6 @@ public class ServerConfig {
     //Pirate Energy Charge
     public boolean PERMANENT_ENERGY_CHARGE;
 
-    //Summon Critical Hits
-    public boolean USE_SUMMON_CRIT;
-    public int SUMMON_CRIT_RATE;
-    public int SUMMON_CRIT_DAMAGE;
-
     //Other configuration
     public boolean SHUTDOWNHOOK;
 

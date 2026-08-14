@@ -30,7 +30,6 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import client.status.MonsterStatusEffect;
-import config.YamlConfig;
 import constants.skills.Outlaw;
 import net.packet.InPacket;
 import org.slf4j.Logger;
@@ -41,7 +40,6 @@ import server.life.Monster;
 import server.life.MonsterInformationProvider;
 import server.maps.Summon;
 import tools.PacketCreator;
-import tools.Randomizer;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -108,11 +106,6 @@ public final class SummonDamageHandler extends AbstractDealDamageHandler {
                 damage = maxDmg;
             }
 
-            // Deliberately after the clamp: the client's claim is still validated against the
-            // legitimate ceiling first, so packet editing is caught, and the crit is then applied
-            // as a server-side bonus on top rather than widening what a client may assert.
-            damage = applySummonCrit(damage);
-
             if (damage > 0 && summonEffect.getMonsterStati().size() > 0) {
                 if (summonEffect.makeChanceResult()) {
                     mob.applyStatus(player, new MonsterStatusEffect(summonEffect.getMonsterStati(), summonSkill, null, false), summonEffect.isPoison(), 4000);
@@ -125,25 +118,6 @@ public final class SummonDamageHandler extends AbstractDealDamageHandler {
         if (summon.getSkill() == Outlaw.GAVIOTA) {  // thanks Periwinks for noticing Gaviota not cancelling after grenade toss
             player.cancelEffect(summonEffect, false, -1);
         }
-    }
-
-    /**
-     * v83 summons cannot crit: Skill.wz has no crit field for them and calcMaxDamage carries no
-     * crit term, so any crit the client tried to send would just be clamped away. This applies
-     * one server-side instead, for every summon.
-     */
-    private static int applySummonCrit(int damage) {
-        if (!YamlConfig.config.server.USE_SUMMON_CRIT || damage <= 0) {
-            return damage;
-        }
-
-        int rate = YamlConfig.config.server.SUMMON_CRIT_RATE;
-        if (rate < 100 && Randomizer.nextInt(100) >= rate) {
-            return damage;
-        }
-
-        long crit = (long) damage * YamlConfig.config.server.SUMMON_CRIT_DAMAGE / 100;
-        return (int) Math.min(Integer.MAX_VALUE, crit);   // long math: 300% of a big hit overflows int
     }
 
     private static int calcMaxDamage(StatEffect summonEffect, Character player, boolean magic) {
