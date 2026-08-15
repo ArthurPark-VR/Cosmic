@@ -1180,6 +1180,12 @@ public class Monster extends AbstractLoadedLife {
             case IMMUNE:
             case STRONG:
             case NEUTRAL:
+                if (stats.isBoss()) {
+                    log.info("[boss-status] {} ({}) rejected on boss {}: elemental resistance {} to {}",
+                            status.getSkill().getId(), status.getStati().keySet(), getId(),
+                            getMonsterEffectiveness(status.getSkill().getElement()),
+                            status.getSkill().getElement());
+                }
                 return false;
             case NORMAL:
             case WEAK:
@@ -1206,6 +1212,9 @@ public class Monster extends AbstractLoadedLife {
             }
         }
         if (poison && hp.get() <= 1) {
+            if (stats.isBoss()) {
+                log.info("[boss-status] poison rejected on boss {}: already at {} HP", getId(), hp.get());
+            }
             return false;
         }
 
@@ -1219,8 +1228,12 @@ public class Monster extends AbstractLoadedLife {
             boolean configExemption = !statis.isEmpty()
                     && getBossAllowedStatuses().containsAll(statis.keySet());
             if (!vanillaExemption && !configExemption) {
+                log.info("[boss-status] {} ({}) rejected on boss {}: not whitelisted (allowed: {})",
+                        status.getSkill().getId(), statis.keySet(), getId(), getBossAllowedStatuses());
                 return false;
             }
+            log.info("[boss-status] {} ({}) ALLOWED on boss {}",
+                    status.getSkill().getId(), statis.keySet(), getId());
         }
 
         final Channel ch = map.getChannelServer();
