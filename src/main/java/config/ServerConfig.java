@@ -67,6 +67,12 @@ public class ServerConfig {
     //Pirate Energy Charge
     public boolean PERMANENT_ENERGY_CHARGE;
 
+    //Damage over Time
+    public boolean DOT_CAN_KILL;
+    public int DOT_TICK_INTERVAL;
+    // Names from MonsterStatus. Parsed and validated by Monster.
+    public List<String> BOSS_ALLOWED_STATUSES;
+
     //Other configuration
     public boolean SHUTDOWNHOOK;
 

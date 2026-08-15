@@ -258,6 +258,31 @@ server:
     #never drains for the rest of the session. Applies to Thunder Breaker and Marauder alike.
     PERMANENT_ENERGY_CHARGE: true
 
+    #Damage over Time
+    #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
+    #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path
+    #that awards exp, drops and quest credit - so without it a poisoned mob would sit at 0 HP,
+    #alive and undroppable. With DOT_CAN_KILL on, a lethal tick is routed through the normal
+    #damage path instead, so the kill pays out exactly like a melee kill would.
+    #Applies to every DoT in the game, not just Night Walker's - mage poison mist, Ninja Ambush,
+    #all venoms.
+    DOT_CAN_KILL: true
+    DOT_TICK_INTERVAL: 500              #Milliseconds between DoT ticks. Vanilla is 1000.
+                                        #Halving it doubles total DoT damage over a fixed duration.
+                                        #Shadow Web keeps its own separate 3500ms cadence.
+
+    #Which MonsterStatus values are allowed to land on boss-flagged monsters. Vanilla allows
+    #none at all - one check rejects every status on a boss, which is why poison, venom and
+    #Shadow Web silently do nothing to them. Listing a status here exempts it. Every status
+    #carried by an effect must be listed for that effect to apply, so a mixed effect that also
+    #carries STUN still gets rejected. Leave hard crowd control (STUN, FREEZE, DOOM) off this
+    #list unless you want bosses to stop being bosses. Seal is blocked separately and stays so.
+    BOSS_ALLOWED_STATUSES:
+      - POISON
+      - VENOMOUS_WEAPON
+      - SHADOW_WEB
+      - NINJA_AMBUSH
+
     #Other configuration
     SHUTDOWNHOOK: true
 

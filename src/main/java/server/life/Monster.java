@@ -75,6 +75,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -87,6 +88,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Monster extends AbstractLoadedLife {
     private static final Logger log = LoggerFactory.getLogger(Monster.class);
+    private static volatile Set<MonsterStatus> bossAllowedStatuses;
 
     private ChangeableStats ostats = null;  //unused, v83 WZs offers no support for changeable stats.
     private MonsterStats stats;
@@ -1130,6 +1132,45 @@ public class Monster extends AbstractLoadedLife {
         return animationTime;
     }
 
+    /**
+     * MonsterStatus values that are permitted to land on boss-flagged monsters. Vanilla rejects
+     * all of them, which is why poison, venom and Shadow Web silently do nothing to bosses.
+     */
+    private static Set<MonsterStatus> getBossAllowedStatuses() {
+        Set<MonsterStatus> cached = bossAllowedStatuses;
+        if (cached != null) {
+            return cached;
+        }
+
+        synchronized (Monster.class) {
+            if (bossAllowedStatuses != null) {
+                return bossAllowedStatuses;
+            }
+
+            Set<MonsterStatus> allowed = EnumSet.noneOf(MonsterStatus.class);
+            List<String> configured = YamlConfig.config.server.BOSS_ALLOWED_STATUSES;
+            if (configured != null) {
+                for (String entry : configured) {
+                    if (entry == null || entry.isBlank()) {
+                        continue;
+                    }
+                    try {
+                        allowed.add(MonsterStatus.valueOf(entry.trim().toUpperCase()));
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Ignoring boss-allowed status '{}' - not a MonsterStatus.", entry);
+                    }
+                }
+            }
+
+            if (!allowed.isEmpty()) {
+                log.info("Statuses allowed on bosses: {}", allowed);
+            }
+
+            bossAllowedStatuses = allowed;
+            return allowed;
+        }
+    }
+
     public boolean applyStatus(Character from, final MonsterStatusEffect status, boolean poison, long duration) {
         return applyStatus(from, status, poison, duration, false);
     }
@@ -1170,9 +1211,14 @@ public class Monster extends AbstractLoadedLife {
 
         final Map<MonsterStatus, Integer> statis = status.getStati();
         if (stats.isBoss()) {
-            if (!(statis.containsKey(MonsterStatus.SPEED)
+            boolean vanillaExemption = statis.containsKey(MonsterStatus.SPEED)
                     && statis.containsKey(MonsterStatus.NINJA_AMBUSH)
-                    && statis.containsKey(MonsterStatus.WATK))) {
+                    && statis.containsKey(MonsterStatus.WATK);
+            // Require EVERY carried status to be whitelisted, not just one of them, so an effect
+            // that also applies STUN cannot ride in on the back of an allowed POISON.
+            boolean configExemption = !statis.isEmpty()
+                    && getBossAllowedStatuses().containsAll(statis.keySet());
+            if (!vanillaExemption && !configExemption) {
                 return false;
             }
         }
@@ -1226,7 +1272,7 @@ public class Monster extends AbstractLoadedLife {
             animationTime = broadcastStatusEffect(status);
 
             overtimeAction = new DamageTask(poisonDamage, from, status, 0);
-            overtimeDelay = 1000;
+            overtimeDelay = YamlConfig.config.server.DOT_TICK_INTERVAL;
         } else if (venom) {
             if (from.getJob() == Job.NIGHTLORD || from.getJob() == Job.SHADOWER || from.getJob().isA(Job.NIGHTWALKER3)) {
                 int poisonLevel, matk, jobid = from.getJob().getId();
@@ -1253,11 +1299,10 @@ public class Monster extends AbstractLoadedLife {
                 animationTime = broadcastStatusEffect(status);
 
                 overtimeAction = new DamageTask(poisonDamage, from, status, 0);
-                overtimeDelay = 1000;
+                overtimeDelay = YamlConfig.config.server.DOT_TICK_INTERVAL;
             } else {
                 return false;
             }
-            /*
         } else if (status.getSkill().getId() == Hermit.SHADOW_WEB || status.getSkill().getId() == NightWalker.SHADOW_WEB) { //Shadow Web
             int webDamage = (int) (getMaxHp() / 50.0 + 0.999);
             status.setValue(MonsterStatus.SHADOW_WEB, Integer.valueOf(webDamage));
@@ -1265,7 +1310,6 @@ public class Monster extends AbstractLoadedLife {
             
             overtimeAction = new DamageTask(webDamage, from, status, 1);
             overtimeDelay = 3500;
-            */
         } else if (status.getSkill().getId() == 4121004 || status.getSkill().getId() == 4221004) { // Ninja Ambush
             final Skill skill = SkillFactory.getSkill(status.getSkill().getId());
             final byte level = from.getSkillLevel(skill);
@@ -1275,7 +1319,7 @@ public class Monster extends AbstractLoadedLife {
             animationTime = broadcastStatusEffect(status);
 
             overtimeAction = new DamageTask(damage, from, status, 2);
-            overtimeDelay = 1000;
+            overtimeDelay = YamlConfig.config.server.DOT_TICK_INTERVAL;
         } else {
             animationTime = broadcastStatusEffect(status);
         }
@@ -1634,6 +1678,19 @@ public class Monster extends AbstractLoadedLife {
             }
 
             int damage = dealDamage;
+            if (damage >= curHp && YamlConfig.config.server.DOT_CAN_KILL) {
+                // A lethal tick has to go through MapleMap.damageMonster rather than applyDamage:
+                // that is the only path that runs killMonster, so exp, drops and quest credit are
+                // awarded. Calling applyDamage would drop the monster to 0 HP and leave it
+                // standing there undroppable, which is exactly why the (curHp - 1) clamp below
+                // exists in vanilla. damageMonster locks the monster itself, so this branch must
+                // not be wrapped in lockMonster().
+                MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
+                service.interruptMobStatus(map.getId(), status);
+                map.damageMonster(chr, Monster.this, damage);
+                return;
+            }
+
             if (damage >= curHp) {
                 damage = curHp - 1;
                 if (type == 1 || type == 2) {
