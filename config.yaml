@@ -258,6 +258,17 @@ server:
     #never drains for the rest of the session. Applies to Thunder Breaker and Marauder alike.
     PERMANENT_ENERGY_CHARGE: true
 
+    #Thief Dark Sight
+    #Attacking normally drops Dark Sight: CloseRangeDamageHandler and RangedAttackHandler both
+    #cancel the buff the moment you land a hit. With this on, neither does, so it holds until you
+    #cancel it or log out - nothing else in the server cancels it, including taking damage.
+    #For a Night Walker that also keeps Vanish's bonus up permanently (1.3x at level 10), since
+    #the client applies that multiplier while Dark Sight is active.
+    #NOTE: the server applies no damage mitigation of its own for Dark Sight - TakeDamageHandler
+    #never looks at it. Whether monsters actually stop touching you is client-side aggro
+    #behaviour, and bosses do not always respect it.
+    PERMANENT_DARK_SIGHT: true
+
     #Damage over Time
     #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
     #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path

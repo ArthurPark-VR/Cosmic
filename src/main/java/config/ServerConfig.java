@@ -67,6 +67,9 @@ public class ServerConfig {
     //Pirate Energy Charge
     public boolean PERMANENT_ENERGY_CHARGE;
 
+    //Thief Dark Sight
+    public boolean PERMANENT_DARK_SIGHT;
+
     //Damage over Time
     public boolean DOT_CAN_KILL;
     public int DOT_TICK_INTERVAL;
