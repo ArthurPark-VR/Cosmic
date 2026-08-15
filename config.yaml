@@ -281,6 +281,15 @@ server:
                                         #per monitor tick.
                                         #Shadow Web keeps its own separate 3500ms cadence.
 
+    #Vanilla poison mist ticks for maxHp / (70 - skillLevel) - a slice of the TARGET's max HP.
+    #That makes it trivial on ordinary monsters and pinned to the 32767 clamp on any boss above
+    #roughly 1.3M HP, so it scales with what you are hitting rather than with your character.
+    #With this on, a tick instead deals the skill's own damage % (220% for a maxed Poison Bomb)
+    #against your max base damage, so the DoT matches the hit that lands the mist.
+    #Affects every poison mist: Poison Bomb, FP Poison Mist and Flame Gear. Magic classes scale
+    #off matk, everyone else off watk. Still capped at 32767 per tick either way.
+    POISON_MIST_DOT_USES_SKILL_DAMAGE: true
+
     #Which MonsterStatus values are allowed to land on boss-flagged monsters. Vanilla allows
     #none at all - one check rejects every status on a boss, which is why poison, venom and
     #Shadow Web silently do nothing to them. Listing a status here exempts it. Every status

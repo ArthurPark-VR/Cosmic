@@ -1267,7 +1267,20 @@ public class Monster extends AbstractLoadedLife {
         int animationTime;
         if (poison) {
             int poisonLevel = from.getSkillLevel(status.getSkill());
-            int poisonDamage = Math.min(Short.MAX_VALUE, (int) (getMaxHp() / (70.0 - poisonLevel) + 0.999));
+            int poisonDamage;
+            if (YamlConfig.config.server.POISON_MIST_DOT_USES_SKILL_DAMAGE) {
+                // Tick for the skill's own damage %, so a mist ticks for what its initial hit does
+                // instead of a slice of the target's max HP. Magic classes (FP mist, Flame Gear)
+                // scale off matk, everyone else off watk, matching how summons are validated.
+                StatEffect mistEffect = status.getSkill().getEffect(poisonLevel);
+                long base = from.getJob().isA(Job.MAGICIAN)
+                        ? from.calculateMaxBaseMagicDamage(from.getTotalMagic())
+                        : from.calculateMaxBaseDamage(from.getTotalWatk());
+                poisonDamage = (int) Math.min(Short.MAX_VALUE,
+                        Math.ceil(base * mistEffect.getDamage() / 100.0));
+            } else {
+                poisonDamage = Math.min(Short.MAX_VALUE, (int) (getMaxHp() / (70.0 - poisonLevel) + 0.999));
+            }
             status.setValue(MonsterStatus.POISON, poisonDamage);
             animationTime = broadcastStatusEffect(status);
 
