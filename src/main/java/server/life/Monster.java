@@ -1133,6 +1133,23 @@ public class Monster extends AbstractLoadedLife {
     }
 
     /**
+     * APPLY_MONSTER_STATUS writes the status value as a short, so anything larger reaches the
+     * client wrapped. Only the figure the client renders needs this - the damage actually applied
+     * is carried separately by DamageTask.
+     */
+    private static int clampStatusValue(int damage) {
+        return Math.min(Short.MAX_VALUE, damage);
+    }
+
+    /**
+     * Damage a DoT tick actually deals. Vanilla clamped this to Short.MAX_VALUE alongside the
+     * displayed value, which capped every tick at 32767 no matter how large the real figure was.
+     */
+    private static int uncappedDot(int damage) {
+        return YamlConfig.config.server.DOT_UNCAPPED_DAMAGE ? damage : clampStatusValue(damage);
+    }
+
+    /**
      * MonsterStatus values that are permitted to land on boss-flagged monsters. Vanilla rejects
      * all of them, which is why poison, venom and Shadow Web silently do nothing to bosses.
      */
@@ -1276,15 +1293,18 @@ public class Monster extends AbstractLoadedLife {
                 long base = from.getJob().isA(Job.MAGICIAN)
                         ? from.calculateMaxBaseMagicDamage(from.getTotalMagic())
                         : from.calculateMaxBaseDamage(from.getTotalWatk());
-                poisonDamage = (int) Math.min(Short.MAX_VALUE,
+                poisonDamage = (int) Math.min(Integer.MAX_VALUE,
                         Math.ceil(base * mistEffect.getDamage() / 100.0));
             } else {
-                poisonDamage = Math.min(Short.MAX_VALUE, (int) (getMaxHp() / (70.0 - poisonLevel) + 0.999));
+                poisonDamage = (int) Math.min(Integer.MAX_VALUE, getMaxHp() / (70.0 - poisonLevel) + 0.999);
             }
-            status.setValue(MonsterStatus.POISON, poisonDamage);
+            // The status value rides in APPLY_MONSTER_STATUS as a short, so it must stay inside
+            // short range or the client reads it wrapped. The damage actually dealt lives in
+            // DamageTask's own int field, so only the displayed figure needs clamping.
+            status.setValue(MonsterStatus.POISON, clampStatusValue(poisonDamage));
             animationTime = broadcastStatusEffect(status);
 
-            overtimeAction = new DamageTask(poisonDamage, from, status, 0);
+            overtimeAction = new DamageTask(uncappedDot(poisonDamage), from, status, 0);
             overtimeDelay = YamlConfig.config.server.DOT_TICK_INTERVAL;
         } else if (venom) {
             if (from.getJob() == Job.NIGHTLORD || from.getJob() == Job.SHADOWER || from.getJob().isA(Job.NIGHTWALKER3)) {
@@ -1296,8 +1316,8 @@ public class Monster extends AbstractLoadedLife {
                 }
                 matk = SkillFactory.getSkill(skillid).getEffect(poisonLevel).getMatk();
                 int luk = from.getTotalLuk();
-                int maxDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.2 * luk * matk));
-                int minDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.1 * luk * matk));
+                int maxDmg = (int) Math.ceil(Math.min(Integer.MAX_VALUE, 0.2 * luk * matk));
+                int minDmg = (int) Math.ceil(Math.min(Integer.MAX_VALUE, 0.1 * luk * matk));
                 int gap = maxDmg - minDmg;
                 if (gap == 0) {
                     gap = 1;
@@ -1306,17 +1326,17 @@ public class Monster extends AbstractLoadedLife {
                 for (int i = 0; i < getVenomMulti(); i++) {
                     poisonDamage += (Randomizer.nextInt(gap) + minDmg);
                 }
-                poisonDamage = Math.min(Short.MAX_VALUE, poisonDamage);
-                status.setValue(MonsterStatus.VENOMOUS_WEAPON, poisonDamage);
-                status.setValue(MonsterStatus.POISON, poisonDamage);
+                status.setValue(MonsterStatus.VENOMOUS_WEAPON, clampStatusValue(poisonDamage));
+                status.setValue(MonsterStatus.POISON, clampStatusValue(poisonDamage));
                 animationTime = broadcastStatusEffect(status);
 
-                overtimeAction = new DamageTask(poisonDamage, from, status, 0);
+                overtimeAction = new DamageTask(uncappedDot(poisonDamage), from, status, 0);
                 overtimeDelay = YamlConfig.config.server.VENOM_TICK_INTERVAL;
             } else {
                 return false;
             }
-        } else if (status.getSkill().getId() == Hermit.SHADOW_WEB || status.getSkill().getId() == NightWalker.SHADOW_WEB) { //Shadow Web
+        } else if ((status.getSkill().getId() == Hermit.SHADOW_WEB || status.getSkill().getId() == NightWalker.SHADOW_WEB)
+                && YamlConfig.config.server.SHADOW_WEB_DOT) { //Shadow Web
             int webDamage = (int) (getMaxHp() / 50.0 + 0.999);
             status.setValue(MonsterStatus.SHADOW_WEB, Integer.valueOf(webDamage));
             animationTime = broadcastStatusEffect(status);

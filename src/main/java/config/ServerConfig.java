@@ -72,6 +72,8 @@ public class ServerConfig {
     public int DOT_TICK_INTERVAL;
     public int VENOM_TICK_INTERVAL;
     public boolean POISON_MIST_DOT_USES_SKILL_DAMAGE;
+    public boolean DOT_UNCAPPED_DAMAGE;
+    public boolean SHADOW_WEB_DOT;
     // Names from MonsterStatus. Parsed and validated by Monster.
     public List<String> BOSS_ALLOWED_STATUSES;
 

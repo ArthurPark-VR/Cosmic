@@ -290,6 +290,19 @@ server:
     #off matk, everyone else off watk. Still capped at 32767 per tick either way.
     POISON_MIST_DOT_USES_SKILL_DAMAGE: true
 
+    #Vanilla clamps every DoT tick to Short.MAX_VALUE (32767), because the status value is sent
+    #to the client inside APPLY_MONSTER_STATUS as a short and would otherwise arrive wrapped.
+    #That clamp was applied to the damage as well as to the displayed number, so no tick could
+    #ever exceed 32767. The two are now separate: the figure the client renders stays inside
+    #short range, while the damage dealt is uncapped. Consequence: on a tick above 32767 the
+    #purple poison number shown is the clamped one, but the monster takes the full amount.
+    DOT_UNCAPPED_DAMAGE: true
+
+    #Shadow Web's damage over time is 2% of the target's MAX HP every 3.5s, with no clamp of its
+    #own - roughly 42 million per tick on Pink Bean, which trivialises anything with a large HP
+    #pool. Off by default; the web still immobilises, it just deals no damage.
+    SHADOW_WEB_DOT: false
+
     #Which MonsterStatus values are allowed to land on boss-flagged monsters. Vanilla allows
     #none at all - one check rejects every status on a boss, which is why poison, venom and
     #Shadow Web silently do nothing to them. Listing a status here exempts it. Every status
