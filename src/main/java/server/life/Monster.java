@@ -1299,7 +1299,7 @@ public class Monster extends AbstractLoadedLife {
                 animationTime = broadcastStatusEffect(status);
 
                 overtimeAction = new DamageTask(poisonDamage, from, status, 0);
-                overtimeDelay = YamlConfig.config.server.DOT_TICK_INTERVAL;
+                overtimeDelay = YamlConfig.config.server.VENOM_TICK_INTERVAL;
             } else {
                 return false;
             }

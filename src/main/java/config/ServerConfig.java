@@ -70,6 +70,7 @@ public class ServerConfig {
     //Damage over Time
     public boolean DOT_CAN_KILL;
     public int DOT_TICK_INTERVAL;
+    public int VENOM_TICK_INTERVAL;
     // Names from MonsterStatus. Parsed and validated by Monster.
     public List<String> BOSS_ALLOWED_STATUSES;
 

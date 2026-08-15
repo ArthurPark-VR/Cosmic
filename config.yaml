@@ -267,8 +267,17 @@ server:
     #Applies to every DoT in the game, not just Night Walker's - mage poison mist, Ninja Ambush,
     #all venoms.
     DOT_CAN_KILL: true
-    DOT_TICK_INTERVAL: 500              #Milliseconds between DoT ticks. Vanilla is 1000.
-                                        #Halving it doubles total DoT damage over a fixed duration.
+    DOT_TICK_INTERVAL: 500              #Milliseconds between poison and Ninja Ambush ticks. Vanilla 1000.
+    VENOM_TICK_INTERVAL: 200            #Same, for venom only. Venom's damage is flat (LUK-scaled)
+                                        #rather than a share of max HP like Poison Bomb, so it needs
+                                        #a faster cadence to stay relevant against big HP pools.
+                                        #IMPORTANT: both values are quantised by the mob status
+                                        #monitor. MobStatusService computes
+                                        #  procLimit = ceil(delay / MOB_STATUS_MONITOR_PROC)
+                                        #and fires once every procLimit monitor ticks, so the real
+                                        #interval is always a multiple of MOB_STATUS_MONITOR_PROC
+                                        #(200ms below). 500 therefore behaves as 600, and 200 is the
+                                        #fastest possible - one action per monitor tick.
                                         #Shadow Web keeps its own separate 3500ms cadence.
 
     #Which MonsterStatus values are allowed to land on boss-flagged monsters. Vanilla allows
