@@ -1180,12 +1180,6 @@ public class Monster extends AbstractLoadedLife {
             case IMMUNE:
             case STRONG:
             case NEUTRAL:
-                if (stats.isBoss()) {
-                    log.info("[boss-status] {} ({}) rejected on boss {}: elemental resistance {} to {}",
-                            status.getSkill().getId(), status.getStati().keySet(), getId(),
-                            getMonsterEffectiveness(status.getSkill().getElement()),
-                            status.getSkill().getElement());
-                }
                 return false;
             case NORMAL:
             case WEAK:
@@ -1212,9 +1206,6 @@ public class Monster extends AbstractLoadedLife {
             }
         }
         if (poison && hp.get() <= 1) {
-            if (stats.isBoss()) {
-                log.info("[boss-status] poison rejected on boss {}: already at {} HP", getId(), hp.get());
-            }
             return false;
         }
 
@@ -1228,12 +1219,8 @@ public class Monster extends AbstractLoadedLife {
             boolean configExemption = !statis.isEmpty()
                     && getBossAllowedStatuses().containsAll(statis.keySet());
             if (!vanillaExemption && !configExemption) {
-                log.info("[boss-status] {} ({}) rejected on boss {}: not whitelisted (allowed: {})",
-                        status.getSkill().getId(), statis.keySet(), getId(), getBossAllowedStatuses());
                 return false;
             }
-            log.info("[boss-status] {} ({}) ALLOWED on boss {}",
-                    status.getSkill().getId(), statis.keySet(), getId());
         }
 
         final Channel ch = map.getChannelServer();
@@ -1295,7 +1282,7 @@ public class Monster extends AbstractLoadedLife {
                     return false;
                 }
                 matk = SkillFactory.getSkill(skillid).getEffect(poisonLevel).getMatk();
-                int luk = from.getLuk();
+                int luk = from.getTotalLuk();
                 int maxDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.2 * luk * matk));
                 int minDmg = (int) Math.ceil(Math.min(Short.MAX_VALUE, 0.1 * luk * matk));
                 int gap = maxDmg - minDmg;
@@ -1326,7 +1313,7 @@ public class Monster extends AbstractLoadedLife {
         } else if (status.getSkill().getId() == 4121004 || status.getSkill().getId() == 4221004) { // Ninja Ambush
             final Skill skill = SkillFactory.getSkill(status.getSkill().getId());
             final byte level = from.getSkillLevel(skill);
-            final int damage = (int) ((from.getStr() + from.getLuk()) * ((3.7 * skill.getEffect(level).getDamage()) / 100));
+            final int damage = (int) ((from.getTotalStr() + from.getTotalLuk()) * ((3.7 * skill.getEffect(level).getDamage()) / 100));
 
             status.setValue(MonsterStatus.NINJA_AMBUSH, damage);
             animationTime = broadcastStatusEffect(status);
