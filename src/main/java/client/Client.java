@@ -1492,12 +1492,19 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void sendPacket(Packet packet) {
-        // A bot character has no connection to write to. Discarding here rather than making every
-        // caller ask is deliberate: chr.sendPacket is called from hundreds of places across map
-        // entry, buffs, damage and party updates, and a guard at each one would be missed exactly
-        // once and then NPE in production. This also hardens the pre-existing createMock() users.
         final io.netty.channel.Channel out = ioChannel;
         if (out == null) {
+            // A bot character has no connection to write to, and this is the expected path for
+            // one. Discarding here rather than making every caller ask is deliberate:
+            // chr.sendPacket is reached from hundreds of places across map entry, buffs, damage
+            // and party updates, and a guard at each one would be missed exactly once and then
+            // NPE in production. It also hardens the pre-existing createMock() callers.
+            if (!bot) {
+                // Not expected for anyone else. Previously this threw, which was at least loud;
+                // dropping silently for a real client would hide a genuine bug, so it is said out
+                // loud instead.
+                log.warn("Dropped a packet for a client with no channel (account {})", accountName);
+            }
             return;
         }
         announcerLock.lock();
