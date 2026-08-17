@@ -943,6 +943,11 @@ public class Server {
         log.info("Permanent Energy Charge: {}",
                 YamlConfig.config.server.PERMANENT_ENERGY_CHARGE ? "enabled" : "disabled");
 
+        // After the worlds and channels are up, since a bot is placed into a real map on a real
+        // channel, and before the port opens, so the cast is already standing there for the first
+        // player who connects rather than popping in underneath them.
+        server.bot.BotWorld.spawnAll();
+
         online = true;
         Duration initDuration = Duration.between(beforeInit, Instant.now());
         log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
@@ -1928,6 +1933,11 @@ public class Server {
         if (getWorlds() == null) {
             return;//already shutdown
         }
+
+        // Before the worlds go down, while the maps and player storage a bot is registered in
+        // still exist. This also saves each bot, so where they were standing survives a restart.
+        server.bot.BotWorld.despawnAll();
+
         for (World w : getWorlds()) {
             w.shutdown();
         }

@@ -1931,7 +1931,11 @@ public class Monster extends AbstractLoadedLife {
         Character newControllerWithPuppet = null;
 
         for (Character chr : getMap().getAllPlayers()) {
-            if (!chr.isHidden()) {
+            // Bots are never candidates. Monster movement is driven by the controlling player's
+            // client sending move packets back; a bot has no client, so anything it controlled
+            // would stand still for everyone in the map. Worse, the pick is by fewest controlled
+            // monsters, which makes an idle bot the single most likely candidate.
+            if (!chr.isHidden() && !chr.isBot()) {
                 int ctrlMonsSize = chr.getNumControlledMonsters();
 
                 if (isCharacterPuppetInVicinity(chr)) {

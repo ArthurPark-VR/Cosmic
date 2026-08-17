@@ -485,7 +485,11 @@ public class World {
     public void registerAccountCharacterView(Integer accountId, Character chr) {
         accountCharsLock.lock();
         try {
-            accountChars.get(accountId).put(chr.getId(), chr);
+            // computeIfAbsent rather than get: this view map is normally created by
+            // loadAccountCharactersView when somebody logs in, and every save goes through here.
+            // An account whose characters are in the world without anyone having logged into it -
+            // the bot cast - would otherwise NPE on every single autosave.
+            accountChars.computeIfAbsent(accountId, id -> new TreeMap<>()).put(chr.getId(), chr);
         } finally {
             accountCharsLock.unlock();
         }
@@ -494,7 +498,10 @@ public class World {
     public void unregisterAccountCharacterView(Integer accountId, Integer chrId) {
         accountCharsLock.lock();
         try {
-            accountChars.get(accountId).remove(chrId);
+            SortedMap<Integer, Character> chars = accountChars.get(accountId);
+            if (chars != null) {
+                chars.remove(chrId);
+            }
         } finally {
             accountCharsLock.unlock();
         }

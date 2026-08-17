@@ -277,7 +277,7 @@ server:
     #bot or a bot's goal changes. Never call it on a tick.
     #The server tolerates this being unreachable - every failure path falls back to canned lines,
     #which is why the ollama service is deliberately absent from maplestory's depends_on.
-    USE_BOT_LLM: false                  #Off until you have pulled a model, see below.
+    USE_BOT_LLM: true                   #Needs a model pulled, see below.
     BOT_LLM_ENDPOINT: "http://ollama:11434"   #Container-network name. Use http://localhost:11434
                                         #instead if you run the server outside Docker.
     BOT_LLM_MODEL: "llama3.1:8b"        #Pull it once with:
@@ -300,6 +300,25 @@ server:
     BOT_PROGRESS_HOURS_PER_LEVEL: 8     #Real hours per level from the passage of time alone.
     BOT_PROGRESS_TALKS_PER_LEVEL: 15    #Extra level per this many conversations.
     BOT_PROGRESS_MAX_LEVEL: 200
+
+    #Bot bodies
+    #Whether the cast exists as real characters standing in the world, rather than only as names
+    #you can whisper. A body is a real row in `characters` on a banned system account, because
+    #party, guild, buddy and marriage all join against that row - there is no lighter way in.
+    #Only personas flagged has_body = 1 get one, so the whisper-only cast stays cheap. Turning
+    #this off leaves the characters in the database, it just stops placing them in maps.
+    USE_BOT_BODIES: true
+
+    #Bots answering ordinary map chat, not just whispers. Range is in map units; roughly a screen
+    #and a half at 800. Only the nearest bot answers, so a crowded town does not produce a chorus.
+    BOT_CHAT_IN_MAP: true
+    BOT_CHAT_MAP_RANGE: 800
+
+    #Whether bots accept party, buddy and guild invitations from you.
+    BOT_ACCEPTS_INVITES: true
+
+    #Whether a bot can be engaged and married, skipping the scripted ceremony logistics.
+    BOT_CAN_MARRY: true
 
     #Damage over Time
     #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That

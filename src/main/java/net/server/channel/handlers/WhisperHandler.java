@@ -109,6 +109,10 @@ public final class WhisperHandler extends AbstractPacketHandler {
         // arrives seconds later, exactly as a slow-typing player's would.
         user.sendPacket(PacketCreator.getWhisperResult(botName, true));
 
+        // "follow me" has to work whispered as well as said out loud, and it has to happen now
+        // rather than after a generation that might not arrive.
+        server.bot.BotChat.applyIntent(server.bot.BotWorld.get(botName), user, message);
+
         final int channel = user.getClient().getChannel() - 1;
         BotDialogue.reply(botName, user.getName(), "WHISPER", message)
                 .thenAccept(reply -> {

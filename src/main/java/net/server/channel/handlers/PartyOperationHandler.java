@@ -97,6 +97,9 @@ public final class PartyOperationHandler extends AbstractPacketHandler {
                         if (party.getMembers().size() < 6) {
                             if (InviteCoordinator.createInvite(InviteType.PARTY, player, party.getId(), invited.getId())) {
                                 invited.sendPacket(PacketCreator.partyInvite(player));
+                                // The packet above went nowhere for a bot - nobody is connected to
+                                // click Accept - so the bot answers it itself, shortly.
+                                server.bot.BotSocial.onPartyInvite(invited, party.getId());
                             } else {
                                 c.sendPacket(PacketCreator.partyStatusMessage(22, invited.getName()));
                             }

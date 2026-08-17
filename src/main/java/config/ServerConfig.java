@@ -81,6 +81,13 @@ public class ServerConfig {
     public int BOT_PROGRESS_TALKS_PER_LEVEL;
     public int BOT_PROGRESS_MAX_LEVEL;
 
+    //Bot bodies - characters standing in the world
+    public boolean USE_BOT_BODIES;
+    public boolean BOT_CHAT_IN_MAP;
+    public int BOT_CHAT_MAP_RANGE;
+    public boolean BOT_ACCEPTS_INVITES;
+    public boolean BOT_CAN_MARRY;
+
     //Damage over Time
     public boolean DOT_CAN_KILL;
     public int DOT_TICK_INTERVAL;

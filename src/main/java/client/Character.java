@@ -6178,6 +6178,15 @@ public class Character extends AbstractCharacterObject {
         return hidden;
     }
 
+    /**
+     * True for a character in the world that nobody is connected to - one of the bot cast.
+     * Systems that depend on a real client answering back must check this; monster control is
+     * the important one, since a controller that cannot receive move packets freezes the monster.
+     */
+    public boolean isBot() {
+        return client != null && client.isBot();
+    }
+
     public boolean isMapObjectVisible(MapObject mo) {
         return visibleMapObjects.contains(mo);
     }

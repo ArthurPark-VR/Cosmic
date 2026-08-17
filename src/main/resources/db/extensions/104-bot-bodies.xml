@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Gives the cast bodies: an account to own them, and the per-character data a body needs
+        that a persona does not have.
+
+        Everything social in this codebase - party, guild, buddy, marriage - keys off a real row
+        in `characters`. There is no lighter way in: a fake spawned with raw packets would render
+        in the map and then be invisible to every one of those systems. So bots get real character
+        rows on a real account, and the existing systems treat them as ordinary players.
+
+        The account is banned and holds an unusable password hash. Nothing ever logs into it; it
+        exists purely to own the rows, and banning it means a leaked name cannot be used to log in
+        as the cast.
+
+        Not everyone gets a body. 62 loaded characters is a lot of machinery for personas that
+        only ever needed to answer a whisper, so has_body is opt-in: the five written characters,
+        plus a spread of the rolled cast so the towns are not empty.
+
+        SQL inline, per the includeAll constraint that broke an earlier changeset.
+    -->
+    <changeSet id="bot-bodies-1" author="cosmic-local">
+        <sql splitStatements="true" endDelimiter=";">
+            ALTER TABLE bot_persona
+                ADD COLUMN has_body TINYINT NOT NULL DEFAULT 0,
+                ADD COLUMN level     INT     NOT NULL DEFAULT 30,
+                ADD COLUMN gender    TINYINT NOT NULL DEFAULT 0,
+                ADD COLUMN hair      INT     NOT NULL DEFAULT 30030,
+                ADD COLUMN face      INT     NOT NULL DEFAULT 20000;
+
+            INSERT INTO accounts (name, password, banned, banreason, characterslots, gender, birthday)
+            VALUES ('botsystem', '!bots-never-log-in', 1, 'System account owning the bot cast', 100, 10, '2005-05-11');
+
+            -- The five written characters. Levels put the four Knights well established and Wren
+            -- at the bottom of the climb, which is the whole point of Wren.
+            UPDATE bot_persona SET has_body = 1, level = 131, gender = 0, hair = 30020, face = 20001 WHERE name = 'Cassiel';
+            UPDATE bot_persona SET has_body = 1, level = 128, gender = 0, hair = 30030, face = 20002 WHERE name = 'Rhys';
+            UPDATE bot_persona SET has_body = 1, level = 134, gender = 1, hair = 31050, face = 21002 WHERE name = 'Seraphine';
+            UPDATE bot_persona SET has_body = 1, level = 126, gender = 1, hair = 31040, face = 21000 WHERE name = 'Elowen';
+            UPDATE bot_persona SET has_body = 1, level = 10,  gender = 1, hair = 31000, face = 21001 WHERE name = 'Wren';
+
+            -- A spread of the rolled cast, so a town has people standing in it. Deterministic by
+            -- name rather than random, so this migration produces the same world twice.
+            -- CRC32 of the name rather than its length, so the spread is actually a spread.
+            -- Length alone put half the cast on the same level.
+            UPDATE bot_persona
+            SET has_body = 1,
+                level    = 30 + (CRC32(name) % 90),
+                gender   = CRC32(name) % 2,
+                hair     = IF(CRC32(name) % 2 = 0, 30000 + (CRC32(name) % 8) * 10, 31000 + (CRC32(name) % 8) * 10),
+                face     = IF(CRC32(name) % 2 = 0, 20000 + (CRC32(name) % 3), 21000 + (CRC32(name) % 3))
+            WHERE has_body = 0
+            ORDER BY name
+            LIMIT 16;
+        </sql>
+        <rollback>
+            DELETE FROM accounts WHERE name = 'botsystem';
+            ALTER TABLE bot_persona
+                DROP COLUMN has_body,
+                DROP COLUMN level,
+                DROP COLUMN gender,
+                DROP COLUMN hair,
+                DROP COLUMN face;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

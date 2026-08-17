@@ -2281,6 +2281,40 @@ public class PacketCreator {
         return p;
     }
 
+    /**
+     * A movement packet built from nothing rather than rebroadcast from a client.
+     *
+     * <p>Every other movement packet in this server is a relay: a player's client computes the
+     * path, sends the bytes, and the server forwards them untouched. A character with nobody
+     * connected to it has no client to compute anything, so the bytes have to be written here.
+     *
+     * <p>Emits a single command 0 (absolute move) fragment, whose layout is the one
+     * AbstractMovementPacketHandler parses: position, wobble, foothold, stance, duration. One
+     * fragment is enough - the receiving client tweens between where it last saw the character
+     * and where this says it is, so a walk is a sequence of these rather than a dense path.
+     *
+     * @param stance   even = facing right, odd = facing left; 4/5 is the walking pair
+     * @param duration milliseconds the client should take to play the movement out
+     */
+    public static Packet moveCharacterTo(int chrId, Point from, Point to, int footholdId,
+                                         int stance, int duration) {
+        OutPacket p = OutPacket.create(SendOpcode.MOVE_PLAYER);
+        p.writeInt(chrId);
+        p.writeInt(0);
+
+        // Movement list: one command.
+        p.writeByte(1);
+        p.writeByte(0);                     // command 0, absolute move
+        p.writeShort(to.x);
+        p.writeShort(to.y);
+        p.writeShort(to.x - from.x);        // xwobble, read by the client as horizontal speed
+        p.writeShort(0);                    // ywobble
+        p.writeShort(footholdId);
+        p.writeByte(stance);
+        p.writeShort(duration);
+        return p;
+    }
+
     public static Packet moveSummon(int cid, int oid, Point startPos, InPacket movementPacket, long movementDataLength) {
         final OutPacket p = OutPacket.create(SendOpcode.MOVE_SUMMON);
         p.writeInt(cid);
