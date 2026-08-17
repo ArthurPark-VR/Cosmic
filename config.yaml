@@ -320,6 +320,17 @@ server:
     #Whether a bot can be engaged and married, skipping the scripted ceremony logistics.
     BOT_CAN_MARRY: true
 
+    #Bots fighting. Say "fight" or "help me" to a bot that is with you; "stop" ends it.
+    #Damage is computed server-side and handed to the same map.damageMonster every player attack
+    #ends at, so aggro, drops, experience, death and boss revives all behave identically.
+    #Bots stop attacking anything under damage reflect, and they heal themselves - they are who
+    #you brought with you, not the difficulty.
+    BOT_COMBAT: true
+
+    #Scales bot damage. The curve is level*level/3, so a level 130 bot hits for around 5600 at
+    #1.0. Raise it if they feel like dead weight at bosses; lower it if they trivialise content.
+    BOT_ATTACK_MULTIPLIER: 1.0
+
     #Damage over Time
     #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
     #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path

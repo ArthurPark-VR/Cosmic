@@ -171,9 +171,22 @@ public final class BotChat {
                 if (bot.getMapId() != speaker.getMapId() && speaker.getMap() != null) {
                     BotMovement.warpTo(bot, speaker.getMap(), speaker.getPosition());
                 }
+                BotCombat.disengage(bot.getName());
                 BotMovement.follow(bot, speaker);
             }
-            case STOP -> BotMovement.stopFollowing(bot.getName());
+            case FIGHT -> {
+                if (bot.getMapId() != speaker.getMapId() && speaker.getMap() != null) {
+                    BotMovement.warpTo(bot, speaker.getMap(), speaker.getPosition());
+                }
+                // Combat drives its own movement - it closes on targets and drifts back to you
+                // between them - so a separate follow loop would fight it for control.
+                BotMovement.stopFollowing(bot.getName());
+                BotCombat.engage(bot, speaker);
+            }
+            case STOP -> {
+                BotMovement.stopFollowing(bot.getName());
+                BotCombat.disengage(bot.getName());
+            }
             case NONE -> {
             }
         }

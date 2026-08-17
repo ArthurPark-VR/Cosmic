@@ -16,8 +16,15 @@ import java.util.Locale;
 
 public enum BotIntent {
     FOLLOW,
+    FIGHT,
     STOP,
     NONE;
+
+    private static final String[] FIGHT_PHRASES = {
+            "help me fight", "help me kill", "fight with me", "attack", "kill it", "kill them",
+            "get it", "fight them", "help me", "cover me", "let's fight", "lets fight",
+            "train with me", "grind with me",
+    };
 
     private static final String[] FOLLOW_PHRASES = {
             "follow me", "come with me", "come along", "let's go", "lets go", "come on",
@@ -27,6 +34,8 @@ public enum BotIntent {
     private static final String[] STOP_PHRASES = {
             "stop following", "stop follow", "wait here", "stay here", "stay there",
             "hold on", "stop there", "wait there", "stop moving", "don't follow", "dont follow",
+            "stop attacking", "stop fighting", "don't attack", "dont attack", "hold back",
+            "stand down", "leave it", "stop it",
     };
 
     public static BotIntent of(String message) {
@@ -40,6 +49,13 @@ public enum BotIntent {
         for (String phrase : STOP_PHRASES) {
             if (lower.contains(phrase)) {
                 return STOP;
+            }
+        }
+        // Fight before follow: "help me fight" contains neither follow phrase, but "let's go"
+        // said mid-fight should not silently downgrade an attack order to a walk.
+        for (String phrase : FIGHT_PHRASES) {
+            if (lower.contains(phrase)) {
+                return FIGHT;
             }
         }
         for (String phrase : FOLLOW_PHRASES) {

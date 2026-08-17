@@ -176,6 +176,7 @@ public final class BotWorld {
         // Before anything is removed: a follow tick that fires against a half-torn-down map is a
         // stack trace during shutdown, which is a bad place to be reading one.
         BotMovement.stopAll();
+        BotCombat.stopAll();
 
         World world = Server.getInstance().getWorld(0);
         for (Character chr : live.values()) {

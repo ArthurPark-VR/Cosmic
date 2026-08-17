@@ -87,6 +87,8 @@ public class ServerConfig {
     public int BOT_CHAT_MAP_RANGE;
     public boolean BOT_ACCEPTS_INVITES;
     public boolean BOT_CAN_MARRY;
+    public boolean BOT_COMBAT;
+    public double BOT_ATTACK_MULTIPLIER;
 
     //Damage over Time
     public boolean DOT_CAN_KILL;
