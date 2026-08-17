@@ -224,7 +224,14 @@ public final class BotMovement {
         }
     }
 
-    private static int footholdAt(MapleMap map, Point at) {
+    /**
+     * The foothold a point is standing on, or 0 when there is none.
+     *
+     * <p>Public because spawning needs it. The spawn packet hardcodes foothold 0 for everyone,
+     * which tells the client the character is attached to no platform; a real client corrects
+     * that in its first move packet and a bot never does.
+     */
+    public static int footholdAt(MapleMap map, Point at) {
         try {
             Foothold fh = map.getFootholds().findBelow(new Point(at.x, at.y - 14));
             return fh != null ? fh.getId() : 0;

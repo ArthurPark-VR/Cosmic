@@ -2450,6 +2450,11 @@ public class MapleMap {
 
         sendObjectPlacement(chr.getClient());
 
+        // Bots already standing here were just described to this client as falling, with no
+        // foothold - the spawn packet says that about everyone. A real player's own client
+        // corrects it instantly; a bot's cannot, so it is corrected for them here.
+        server.bot.BotWorld.settleAllFor(chr);
+
         if (isStartingEventMap() && !eventStarted()) {
             chr.getMap().getPortal("join00").setPortalStatus(false);
         }

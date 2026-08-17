@@ -22,11 +22,14 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.maps.MapleMap;
+import net.packet.Packet;
 import tools.DatabaseConnection;
+import tools.PacketCreator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.awt.Point;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +66,50 @@ public final class BotWorld {
 
     public static Collection<Character> all() {
         return live.values();
+    }
+
+    /**
+     * The packet that tells a client a bot has finished arriving and is standing still.
+     *
+     * <p>The spawn packet says a character is falling, twice over: entering a field it is sent at
+     * y minus 42 with stance 6, the mid-air frame, and the foothold field is hardcoded to zero for
+     * everyone, meaning "attached to no platform". For a real player none of that matters, because
+     * their client sends a move packet within a frame or two carrying the true position, the true
+     * foothold and a standing stance, and every other client re-syncs off it.
+     *
+     * <p>A bot has no client, so that correction never comes. Without this the cast hangs in the
+     * air in a falling pose forever - which is exactly what it did.
+     */
+    public static Packet settlePacket(Character bot) {
+        Point at = bot.getPosition();
+        return PacketCreator.moveCharacterTo(
+                bot.getId(), at, at, BotMovement.footholdAt(bot.getMap(), at), 0, 0);
+    }
+
+    /** Tells everyone in a bot's map that it has landed. */
+    public static void broadcastSettle(Character bot) {
+        MapleMap map = bot.getMap();
+        if (map != null && bot.getPosition() != null) {
+            map.broadcastMessage(settlePacket(bot));
+        }
+    }
+
+    /**
+     * Sends the settle packet for every bot in a map to one arriving player.
+     *
+     * <p>Needed separately from the spawn-time broadcast: a player walking into a town is sent
+     * each bot's spawn data fresh, with the same falling stance and zero foothold, so the
+     * correction has to be repeated for them alone.
+     */
+    public static void settleAllFor(Character arriving) {
+        if (arriving == null || arriving.isBot() || live.isEmpty()) {
+            return;
+        }
+        for (Character bot : live.values()) {
+            if (bot.getMapId() == arriving.getMapId() && bot.getPosition() != null) {
+                arriving.sendPacket(settlePacket(bot));
+            }
+        }
     }
 
     /**
@@ -184,6 +231,8 @@ public final class BotWorld {
         chr.setStance(0);
 
         map.addPlayer(chr);
+        // Immediately after the spawn broadcast, which announced them as falling.
+        broadcastSettle(chr);
 
         live.put(body.name().toLowerCase(), chr);
         liveIds.put(chr.getId(), body.name());

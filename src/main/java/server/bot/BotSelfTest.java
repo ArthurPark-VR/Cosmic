@@ -56,6 +56,7 @@ public final class BotSelfTest {
             testScheduledTasks();
             testBotsAreStandingOnGround();
             testLooksAreDistinct();
+            testSettlePacket();
         } catch (Throwable t) {
             log.error("SELFTEST harness itself blew up", t);
             failed++;
@@ -352,6 +353,46 @@ public final class BotSelfTest {
                     "hair=" + bot.getHair() + " face=" + bot.getFace()
                             + " top=" + (equipped.getItem((short) -5) == null ? "none" : equipped.getItem((short) -5).getItemId()));
         }
+    }
+
+    /**
+     * The packet that stops a bot hanging in the air, checked byte by byte.
+     *
+     * <p>This is the one part of the bot code a running server cannot prove, because the thing
+     * being tested is what a MapleStory client does with these bytes and there is no client here.
+     * So the bytes themselves are checked against the layout AbstractMovementPacketHandler parses:
+     * one command-0 fragment carrying position, foothold and a standing stance. Getting the shape
+     * right is necessary, not sufficient - it still has to be looked at in game.
+     */
+    private static void testSettlePacket() {
+        Character bot = BotWorld.get("Cassiel");
+        if (bot == null) {
+            check("settle: Cassiel present", false, "missing");
+            return;
+        }
+        byte[] bytes = BotWorld.settlePacket(bot).getBytes();
+
+        // opcode(2) chrId(4) zero(4) count(1) command(1) x,y,vx,vy,fh(10) stance(1) duration(2)
+        check("settle packet is the right length", bytes.length == 25, bytes.length + " bytes");
+        if (bytes.length != 25) {
+            return;
+        }
+
+        int chrId = (bytes[2] & 0xFF) | (bytes[3] & 0xFF) << 8 | (bytes[4] & 0xFF) << 16 | (bytes[5] & 0xFF) << 24;
+        int count = bytes[10];
+        int command = bytes[11];
+        int x = (short) ((bytes[12] & 0xFF) | (bytes[13] & 0xFF) << 8);
+        int y = (short) ((bytes[14] & 0xFF) | (bytes[15] & 0xFF) << 8);
+        int foothold = (short) ((bytes[20] & 0xFF) | (bytes[21] & 0xFF) << 8);
+        int stance = bytes[22];
+
+        check("settle names the right character", chrId == bot.getId(), chrId + " vs " + bot.getId());
+        check("settle carries exactly one movement", count == 1, count);
+        check("settle uses absolute move (command 0)", command == 0, command);
+        check("settle carries the real position",
+                x == bot.getPosition().x && y == bot.getPosition().y, x + "," + y);
+        check("settle carries a real foothold, not 0", foothold > 0, foothold);
+        check("settle uses a standing stance", stance == 0, stance);
     }
 
     private static int itemIn(client.inventory.Inventory inv, short slot) {
