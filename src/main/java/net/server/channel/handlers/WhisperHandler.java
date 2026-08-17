@@ -29,6 +29,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
+import server.bot.BotDialogue;
 import tools.PacketCreator;
 import tools.PacketCreator.WhisperFlag;
 
@@ -51,6 +52,13 @@ public final class WhisperHandler extends AbstractPacketHandler {
         Character target = c.getWorldServer().getPlayerStorage().getCharacterByName(name);
 
         if (target == null) {
+            // Not a logged-in player - but it may be a bot persona. Whispering a name is how
+            // players actually reach each other, so this is the natural interface for talking
+            // to a bot, and it works whether or not the bot is spawned on a map anywhere.
+            if (request == (WhisperFlag.WHISPER | WhisperFlag.REQUEST) && BotDialogue.isBot(name)) {
+                handleBotWhisper(p.readString(), c.getPlayer(), name);
+                return;
+            }
             c.sendPacket(PacketCreator.getWhisperResult(name, false));
             return;
         }
@@ -85,6 +93,28 @@ public final class WhisperHandler extends AbstractPacketHandler {
             // not found for whisper is the same message
             user.sendPacket(PacketCreator.getWhisperResult(target.getName(), false));
         }
+    }
+
+    /**
+     * Delivers a whisper to a bot and whispers its reply back, using the same packets a real
+     * player conversation uses - from the client's point of view there is no difference.
+     */
+    private void handleBotWhisper(String message, Character user, String botName) {
+        if (message.length() > Byte.MAX_VALUE) {
+            return;
+        }
+        ChatLogger.log(user.getClient(), "Whisper To " + botName, message);
+
+        // Acknowledge immediately so the client shows the whisper as delivered; the reply
+        // arrives seconds later, exactly as a slow-typing player's would.
+        user.sendPacket(PacketCreator.getWhisperResult(botName, true));
+
+        final int channel = user.getClient().getChannel() - 1;
+        BotDialogue.reply(botName, user.getName(), "WHISPER", message)
+                .thenAccept(reply -> {
+                    String text = reply.orElseGet(() -> BotDialogue.cannedFallback(botName));
+                    user.sendPacket(PacketCreator.getWhisperReceive(botName, channel, false, text));
+                });
     }
 
     private void handleWhisper(String message, Character user, Character target) {

@@ -56,7 +56,7 @@ import client.command.commands.gm1.MobHpCommand;
 import client.command.commands.gm1.WhatDropsFromCommand;
 import client.command.commands.gm1.WhoDropsCommand;
 import client.command.commands.gm2.ApCommand;
-import client.command.commands.gm2.AskBotCommand;
+import client.command.commands.gm2.BotPersonaCommand;
 import client.command.commands.gm2.BombCommand;
 import client.command.commands.gm2.BuffCommand;
 import client.command.commands.gm2.BuffMapCommand;
@@ -394,7 +394,7 @@ public class CommandsExecutor {
         addCommand("unhide", 2, UnHideCommand.class);
         addCommand("sp", 2, SpCommand.class);
         addCommand("ap", 2, ApCommand.class);
-        addCommand("askbot", 2, AskBotCommand.class);
+        addCommand("botpersona", 2, BotPersonaCommand.class);
         addCommand("empowerme", 2, EmpowerMeCommand.class);
         addCommand("buffmap", 2, BuffMapCommand.class);
         addCommand("buff", 2, BuffCommand.class);

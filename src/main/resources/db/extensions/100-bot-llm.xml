@@ -6,12 +6,69 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        Lives under db/extensions rather than db/changelog-tables.xml on purpose: changelog-root
-        picks this directory up via includeAll, so additive changes here do not collide when
-        pulling upstream Cosmic or merging a bot framework.
+        Tables backing LLM bot dialogue.
+
+        Lives under db/extensions because changelog-root picks that directory up via includeAll,
+        so this survives upstream Cosmic pulls and a bot-framework merge without colliding with
+        changelog-tables.xml.
+
+        SQL is INLINE rather than in a sibling .sql file, and that is deliberate: includeAll
+        globs *every* file in this directory, so a .sql file here is picked up a second time as
+        its own raw changelog, executed without statement splitting, and fails on the second
+        CREATE TABLE - which aborts migration and stops the server booting at all. Keeping the
+        statements inside <sql> keeps this to exactly one changeset.
+
+        Keyed on the bot's name, not characters(id): names are unique in MapleStory and are how
+        players address each other, so a persona can exist and be whispered before any bot
+        character does, and the same rows keep working once one exists.
     -->
     <changeSet id="bot-llm-1" author="cosmic-local">
-        <sqlFile path="db/extensions/100-bot-llm.sql"/>
+        <sql splitStatements="true" endDelimiter=";">
+            CREATE TABLE bot_persona
+            (
+                name         VARCHAR(13)  NOT NULL,
+                characterid  INT          NULL,
+                temperament  VARCHAR(64)  NOT NULL DEFAULT '',
+                speech_style VARCHAR(255) NOT NULL DEFAULT '',
+                backstory    TEXT,
+                traits       JSON,
+                created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (name)
+            ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+            CREATE TABLE bot_memory
+            (
+                id           INT          NOT NULL AUTO_INCREMENT,
+                bot_name     VARCHAR(13)  NOT NULL,
+                counterparty VARCHAR(13)  NOT NULL DEFAULT '',
+                channel      VARCHAR(16)  NOT NULL DEFAULT 'WHISPER',
+                speaker      VARCHAR(8)   NOT NULL DEFAULT 'them',
+                content      VARCHAR(512) NOT NULL DEFAULT '',
+                created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY bot_memory_recent (bot_name, counterparty, id),
+                CONSTRAINT bot_memory_persona FOREIGN KEY (bot_name)
+                    REFERENCES bot_persona (name) ON DELETE CASCADE
+            ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+            CREATE TABLE bot_goal
+            (
+                bot_name     VARCHAR(13)  NOT NULL,
+                goal_type    VARCHAR(32)  NOT NULL DEFAULT 'IDLE',
+                target       VARCHAR(128) NOT NULL DEFAULT '',
+                target_value INT          NOT NULL DEFAULT 0,
+                status       VARCHAR(16)  NOT NULL DEFAULT 'ACTIVE',
+                updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (bot_name),
+                CONSTRAINT bot_goal_persona FOREIGN KEY (bot_name)
+                    REFERENCES bot_persona (name) ON DELETE CASCADE
+            ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+        </sql>
+        <rollback>
+            DROP TABLE IF EXISTS bot_memory;
+            DROP TABLE IF EXISTS bot_goal;
+            DROP TABLE IF EXISTS bot_persona;
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>
