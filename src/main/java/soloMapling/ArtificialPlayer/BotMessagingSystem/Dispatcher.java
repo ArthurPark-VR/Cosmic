@@ -84,6 +84,16 @@ public class Dispatcher implements Runnable {
                 return;
             }
 
+            // AI dialogue gets first refusal. This is the one place in the framework that already
+            // knows both who spoke and which bot was addressed, so it is the only place the hook
+            // needs to exist. tryReply returns false whenever the model is off, unreachable,
+            // saturated, or the bot is already answering - and then the scripted session below
+            // runs exactly as it always did. There is never both.
+            if (soloMapling.ArtificialPlayer.BotAiSystem.BotAiChat.tryReply(
+                    bot.getChr(), message.getSender(), message.getContent())) {
+                return;
+            }
+
             if (!bot.getRunning()) {
                 startNewBotSession(bot, message);
             } else {

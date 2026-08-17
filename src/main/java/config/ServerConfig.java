@@ -87,6 +87,16 @@ public class ServerConfig {
     public boolean SPAWN_BOTS_ON_STARTUP;
     public double BOT_POPULATION_SCALE;
 
+    //Bot AI dialogue - a local LLM answers when a player talks to a bot
+    public boolean USE_BOT_LLM;
+    public String BOT_LLM_ENDPOINT;
+    public String BOT_LLM_MODEL;
+    public int BOT_LLM_TIMEOUT_MS;
+    public int BOT_LLM_MAX_TOKENS;
+    public int BOT_LLM_MAX_REPLY_CHARS;
+    public int BOT_LLM_MEMORY_TURNS;
+    public int BOT_LLM_MAX_CONCURRENT;
+
     //Server Flags
     public boolean USE_CUSTOM_KEYSET;
     public boolean USE_DEBUG;

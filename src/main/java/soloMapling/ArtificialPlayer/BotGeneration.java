@@ -248,6 +248,9 @@ public class BotGeneration {
     }
 
     public static void removeBotFromServer(Character fakechar) {
+        // Drop any AI conversation history for this name, or the map grows for the life of the
+        // process. Done here rather than on a timer because despawn is the exact moment it dies.
+        soloMapling.ArtificialPlayer.BotAiSystem.BotAiChat.forget(fakechar.getName());
         fakechar.getMap().removePlayer(fakechar);
         channel.removePlayer(fakechar);
         world.getPlayerStorage().removePlayer(fakechar.getId());

@@ -215,6 +215,28 @@ server:
                                  #never engaging. Lower this only if the lag persists AFTER
                                  #everything has loaded, which would mean a real server problem.
 
+    #Bot AI dialogue.
+    #When a player says a bot's name in map chat, a local LLM answers as that bot instead of
+    #reading a scripted line. The bot's character comes from its live game state - job, level,
+    #tier, where it is and what it is doing - so all 3000 bots differ without any authoring.
+    #
+    #Requires the ollama service and a pulled model:
+    #    docker compose exec ollama ollama pull llama3.1:8b
+    #Every failure path falls back to the scripted dialogue, so this being unreachable, slow
+    #or off is never fatal - which is why ollama is deliberately not in maplestory's depends_on.
+    USE_BOT_LLM: true
+    BOT_LLM_ENDPOINT: "http://ollama:11434"   #Container-network name. Use http://localhost:11434
+                                            #instead if you run the server outside Docker.
+    BOT_LLM_MODEL: "llama3.1:8b"
+    BOT_LLM_TIMEOUT_MS: 12000           #Past this, fall back to a scripted line. CPU-only
+                                        #inference is slow; raise it if replies get dropped.
+    BOT_LLM_MAX_TOKENS: 100             #A bot that monologues cannot be sent as chat anyway.
+    BOT_LLM_MAX_REPLY_CHARS: 250        #Hard cap after generation, cut at a sentence end.
+    BOT_LLM_MEMORY_TURNS: 6             #Exchanges of context kept per bot-player pair. Small
+                                        #on purpose: 8B models lose coherence with long context.
+    BOT_LLM_MAX_CONCURRENT: 3           #Generations in flight at once. One model on one GPU is
+                                        #the bottleneck; more than this just queues and times out.
+
     #Server Flags
     USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
     USE_DEBUG: false                    #Will enable some text prints on the client, oriented for debugging purposes.
