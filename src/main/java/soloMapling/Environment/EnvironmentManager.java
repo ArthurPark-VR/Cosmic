@@ -221,7 +221,27 @@ public class EnvironmentManager {
     // gear set together by the decorator. They self-discover nearby level-appropriate field maps and
     // fan out. A sub-level-10 band spawns Beginners (job 0): the decorator gives them a sword and
     // they fight with a basic skill-0 swing, so low bands are fine (class 1..4 is moot - all sword).
+
+    /**
+     * Applies BOT_POPULATION_SCALE to a cohort size, never returning less than 1 for a cohort
+     * that was asked for at all - a town with zero bots reads as broken rather than quiet.
+     */
+    public static int scaled(int requested) {
+        if (requested <= 0) {
+            return requested;
+        }
+        double scale = config.YamlConfig.config.server.BOT_POPULATION_SCALE;
+        if (scale <= 0 || scale >= 1.0) {
+            return scale <= 0 ? 1 : requested;
+        }
+        return Math.max(1, (int) Math.round(requested * scale));
+    }
     private static int spawnTrainingBotsAt(int townMapId, int n, int loLevel, int hiLevel) {
+        // Scaled by BOT_POPULATION_SCALE. Upstream's literals total 2390 training bots for wave 8
+        // alone, and the comment above them says to dial them down for a first boot. Doing it here
+        // rather than editing sixteen numbers keeps this file matching upstream, and makes the
+        // population a config knob instead of a rebuild.
+        n = scaled(n);
         MapleMap map = getMapleMapById(townMapId);
         if (map == null || map.getPortal(0) == null) {
             debugprint(fmt("TrainingBots: no map / spawn portal for {}", townMapId));

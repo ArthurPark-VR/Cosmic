@@ -204,6 +204,10 @@ server:
     #Other configuration
     SHUTDOWNHOOK: true
     SPAWN_BOTS_ON_STARTUP: true         #SoloMapling: auto-populate the world with bots on server startup (no player/relog needed). Set false to disable bot spawning.
+    BOT_POPULATION_SCALE: 0.12   #Scales every bot cohort at startup. Upstream asks for roughly
+                                 #3000 bots (wave 8 alone requests 2390), which is far more
+                                 #than a home PC or a v83 client handles. 0.15 gives ~450.
+                                 #Raise toward 1.0 for a fuller world, lower if it still lags.
 
     #Server Flags
     USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.

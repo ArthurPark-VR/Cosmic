@@ -91,6 +91,11 @@ public class BotCustomization {
         }
         source.setPosition(dst); // set the position of Equip to dst (see body part)
         fakechar.getInventory(InventoryType.EQUIPPED).addItemFromDB(source); // Actually equip the item
+        // Clear the wearability latch. canWearEquipment caches its verdict on the inventory
+        // (Inventory.checked), so a look encoded before the bot was dressed - or before its stats
+        // were raised - freezes that answer for the character's whole life. Clearing it on every
+        // equip makes the look depend on what the bot is wearing, not on spawn ordering.
+        fakechar.getInventory(InventoryType.EQUIPPED).checked(false);
         fakechar.equipChanged(); // Update fakechar avatar, doesn't work if they're not on screen
     }
 

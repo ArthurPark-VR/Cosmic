@@ -85,6 +85,7 @@ public class ServerConfig {
 
     //SoloMapling: spawn the bot world automatically on server startup (cold boot).
     public boolean SPAWN_BOTS_ON_STARTUP;
+    public double BOT_POPULATION_SCALE;
 
     //Server Flags
     public boolean USE_CUSTOM_KEYSET;

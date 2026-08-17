@@ -12,10 +12,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class BotDecorate {
 
-    /** TEMPORARY: bounds the look diagnostic above to the first few bots. */
-    private static final java.util.concurrent.atomic.AtomicInteger LOOK_SAMPLES =
-            new java.util.concurrent.atomic.AtomicInteger();
-
 
     /**
      * Fraction of bots that get the full class-aware decoration pass.
@@ -310,6 +306,18 @@ public class BotDecorate {
         bot.setLevel(level);
         bot.setJob(Job.getById(job));
 
+        // Stats scaled to the level, BEFORE anything is equipped.
+        //
+        // Bots are cloned from the fmbot template, which is str 12 / dex 5 / int 4 / luk 4, and
+        // nothing in the bot code ever raises them. Every look packet is filtered through
+        // ItemInformationProvider.canWearEquipment, which silently drops any equip whose stat or
+        // level requirement the wearer does not meet - so a level 80 bot in level 80 gear was
+        // described to the client wearing almost none of it, while the server held it correctly.
+        // Worse, that verdict is latched per inventory, so it froze whatever the first encode saw.
+        // Fame is raised for the same reason: reqPOP gates some equips.
+        bot.updateStrDexIntLuk(4 + level * 5);
+        bot.setFame(30);
+
         BotDecorateBody.decorateBotBody(bot);
 
         if (EquipMetadataCache.isInitialized()) {
@@ -337,24 +345,6 @@ public class BotDecorate {
             }
         }
 
-        // TEMPORARY diagnostic: log what the first few bots actually end up wearing, so
-        // "they all look the same" can be answered from evidence rather than inspection.
-        // Remove once the cause is known.
-        if (LOOK_SAMPLES.getAndIncrement() < 6) {
-            StringBuilder worn = new StringBuilder();
-            var eq = bot.getInventory(client.inventory.InventoryType.EQUIPPED);
-            for (short slot : new short[]{-1, -5, -6, -7, -11, -101, -104, -105, -106, -107, -111}) {
-                var it = eq.getItem(slot);
-                if (it != null) {
-                    worn.append(slot).append('=').append(it.getItemId()).append(' ');
-                }
-            }
-            System.out.println("[BotLookSample] " + bot.getName() + " job=" + bot.getJob()
-                    + " lvl=" + bot.getLevel() + " tier=" + bot.getTier()
-                    + " hair=" + bot.getHair() + " face=" + bot.getFace()
-                    + " | " + (worn.length() == 0 ? "NOTHING EQUIPPED" : worn.toString().trim()));
-        }
-
         // NX cosmetic layer - runs on every bot regardless of which equip path
         // it took. Its own 30% base gate decides whether the bot actually gets
         // any NX pieces.
@@ -377,6 +367,18 @@ public class BotDecorate {
         bot.setGender(selectRandomGender());
         bot.setLevel(level);
         bot.setJob(Job.getById(job));
+
+        // Stats scaled to the level, BEFORE anything is equipped.
+        //
+        // Bots are cloned from the fmbot template, which is str 12 / dex 5 / int 4 / luk 4, and
+        // nothing in the bot code ever raises them. Every look packet is filtered through
+        // ItemInformationProvider.canWearEquipment, which silently drops any equip whose stat or
+        // level requirement the wearer does not meet - so a level 80 bot in level 80 gear was
+        // described to the client wearing almost none of it, while the server held it correctly.
+        // Worse, that verdict is latched per inventory, so it froze whatever the first encode saw.
+        // Fame is raised for the same reason: reqPOP gates some equips.
+        bot.updateStrDexIntLuk(4 + level * 5);
+        bot.setFame(30);
 
         BotDecorateBody.decorateBotBody(bot);
 

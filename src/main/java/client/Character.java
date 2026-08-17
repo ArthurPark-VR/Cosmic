@@ -2385,7 +2385,12 @@ public class Character extends AbstractCharacterObject {
                 ps.executeUpdate();
             }
 
-            String[] toDel = {"famelog", "inventoryitems", "keymap", "queststatus", "savedlocations", "trocklocations", "skillmacros", "skills", "eventstats", "server_queue"};
+            // "server_queue" was in this list and no such table exists in this schema. MySQL
+            // raised 1146, which was rethrown after the characters row had ALREADY been deleted
+            // and committed - this method never turns off autocommit. So every deletion destroyed
+            // the character, then failed, reported "unknown error" to the client, and skipped the
+            // in-memory eviction, leaving a ghost in the character list until a restart.
+            String[] toDel = {"famelog", "inventoryitems", "keymap", "queststatus", "savedlocations", "trocklocations", "skillmacros", "skills", "eventstats"};
             for (String s : toDel) {
                 Character.deleteWhereCharacterId(con, "DELETE FROM `" + s + "` WHERE characterid = ?", cid);
             }

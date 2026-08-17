@@ -92,7 +92,8 @@ public final class TownPresenceConfig {
                 String name = str(town.get("name"), "town");
                 int lo = toInt(town.get("level_lo"), 10);
                 int hi = toInt(town.get("level_hi"), lo);
-                int wanderers = toInt(town.get("wanderers"), 0);
+                int wanderers = soloMapling.Environment.EnvironmentManager.scaled(
+                        toInt(town.get("wanderers"), 0));
                 String dialogue = str(town.get("dialogue"), null);
                 List<MapShare> shares = new ArrayList<>();
                 Object mapsNode = town.get("maps");
@@ -102,7 +103,8 @@ public final class TownPresenceConfig {
                             continue;
                         }
                         int mapId = toInt(mm.get("map"), -1);
-                        int count = toInt(mm.get("count"), 0);
+                        int count = soloMapling.Environment.EnvironmentManager.scaled(
+                                toInt(mm.get("count"), 0));
                         if (mapId > 0 && count > 0) {
                             shares.add(new MapShare(mapId, count,
                                     parseOverrides(mm, sidecarPins.getOrDefault(mapId, List.of()))));

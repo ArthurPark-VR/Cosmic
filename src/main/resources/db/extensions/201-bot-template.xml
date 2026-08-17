@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Creates the bot template character on any database, not just an empty one.
+
+        162-fmbot-data.sql pins the template to character id 2 with INSERT IGNORE. On a database
+        that predates SoloMapling - like this one - id 2 was already a player's character, so the
+        insert was silently skipped: the 'fmbot' account was created, with no character on it.
+
+        The consequence was severe rather than cosmetic. BotGeneration cloned character id 2
+        regardless, so every bot in the world was a copy of that player character - wearing its
+        equipment and, worse, holding its skills. Custom Thunder Breaker skill ids that a clean
+        client cannot resolve were among them, which crashed the client whenever a bot attacked.
+
+        This inserts the template without pinning an id, and only if the fmbot account has no
+        character yet. BotGeneration now resolves the template by account name, so any id works.
+    -->
+    <changeSet id="bot-template-1" author="cosmic-local">
+        <sql splitStatements="true" endDelimiter=";">
+            INSERT INTO characters (accountid, world, `name`, level, exp,
+                                    str, dex, luk, `int`, hp, mp, maxhp, maxmp, meso, job,
+                                    skincolor, gender, hair, face, ap, map, spawnpoint, gm,
+                                    equipslots, useslots, setupslots, etcslots)
+            SELECT a.id, 0, 'fmbot', 1, 0,
+                   12, 5, 4, 4, 50, 5, 50, 5, 0, 0,
+                   0, 0, 30030, 20000, 0, 10000, 0, 0,
+                   96, 96, 96, 96
+            FROM accounts a
+            WHERE a.name = 'fmbot'
+              AND NOT EXISTS (SELECT 1 FROM characters c WHERE c.accountid = a.id)
+              AND NOT EXISTS (SELECT 1 FROM characters c2 WHERE c2.name = 'fmbot');
+        </sql>
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

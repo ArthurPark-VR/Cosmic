@@ -2940,7 +2940,11 @@ public class MapleMap {
                 }
             } else {
                 for (Character chr : characters) {
-                    if (chr != source) {
+                // Skip bot recipients. Building the packet is the expensive part - a full
+                // per-recipient encode of appearance and buffs - and BotClient.sendPacket
+                // discards it. With hundreds of bots in one map, adding the k-th costs k-1
+                // encodes that go nowhere, and every equip during decoration costs another N.
+                    if (chr != source && !soloMapling.ArtificialPlayer.BotHelpers.isBot(chr)) {
                         chr.sendPacket(PacketCreator.spawnPlayerMapObject(chr.getClient(), player, enteringField));
                     }
                 }
@@ -2954,7 +2958,9 @@ public class MapleMap {
         chrRLock.lock();
         try {
             for (Character chr : characters) {
-                if (chr != source) {
+                // Same reasoning as the spawn broadcast above: encoded per recipient, discarded
+                // by every bot. This one fires on every equip change during bot decoration.
+                if (chr != source && !soloMapling.ArtificialPlayer.BotHelpers.isBot(chr)) {
                     chr.sendPacket(PacketCreator.updateCharLook(chr.getClient(), player));
                 }
             }

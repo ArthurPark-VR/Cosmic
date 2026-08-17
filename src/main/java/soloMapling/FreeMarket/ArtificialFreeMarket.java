@@ -87,11 +87,22 @@ public class ArtificialFreeMarket {
 
         double hiredMerchantChance = getHiredMerchantChance(mapId);
 
+        // Free Market shops are the largest single block of bots - roughly 571 spots across the
+        // four regions - and a solo player rarely uses the FM at all. Scaled by the same
+        // BOT_POPULATION_SCALE as everything else, keeping at least a handful per room so the
+        // market still looks open rather than abandoned.
+        int fmWanted = soloMapling.Environment.EnvironmentManager.scaled(positions.size());
+        int fmTaken = 0;
+
         for (Point position : positions) {
+            if (fmTaken >= fmWanted) {
+                break;
+            }
             // ~2% per-spot skip. Use continue so we don't abandon the rest of the room.
             if (chance(2)) {
                 continue;
             }
+            fmTaken++;
             if (Math.random() < hiredMerchantChance) {
                 ExecutorServiceManager.runAsync(() -> spawnHiredMerchantStore(mapId, position));
             } else {

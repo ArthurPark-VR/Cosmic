@@ -1,6 +1,7 @@
 package soloMapling.ArtificialPlayer;
 
 import client.Character;
+import soloMapling.server.SoloMaplingConstants;
 import client.Client;
 import net.server.Server;
 import net.server.channel.Channel;
@@ -31,7 +32,9 @@ public class BotHelpers {
     }
 
     public static boolean isBot(Character chr) {
-        return isBot(chr.getId());
+        // Null-safe: getCharFromChannelStorage above can return null, and callers feed its
+        // result straight back in. This is now on the hot path of two map broadcast loops.
+        return chr != null && isBot(chr.getId());
     }
 
     private static boolean isBot(int id) {
@@ -39,7 +42,9 @@ public class BotHelpers {
     }
 
     private static boolean isArtificial(int id) {
-        return id > 20000;
+        // >= because BOT_BASE_ID is itself 20000. Unreachable while currentBotCount starts at
+        // 100, so the first id is 20100 - but it becomes an off-by-one the moment either changes.
+        return id >= SoloMaplingConstants.GameConstants.BOT_BASE_ID;
     }
 
     private static boolean isConsole(int id) {

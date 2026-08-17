@@ -36,6 +36,70 @@ public class BotGeneration {
     private static final AtomicInteger currentBotCount = new AtomicInteger(100);
 
     /**
+     * Character id of the template every bot is cloned from, resolved once.
+     *
+     * <p>Upstream hardcodes 2, with 162-fmbot-data.sql seeding an 'fmbot' character at that id.
+     * That seed is an INSERT IGNORE, and its own comment concedes the hazard: on a database that
+     * already has a character at id 2, the insert is silently skipped. This server's database
+     * predates SoloMapling, so id 2 was one of the player's own characters - and every bot was
+     * cloned from it. That is one root cause for two symptoms: every bot wore that character's
+     * equipment, and every bot inherited its skills, including custom Thunder Breaker skill ids
+     * a clean client cannot resolve, which crashed the client on attack.
+     *
+     * <p>Resolved by account name instead, and if the template cannot be found or does not look
+     * like a template, bots do not spawn at all. Refusing to spawn is far better than cloning a
+     * player: the failure is loud, immediate, and cannot be mistaken for something else.
+     */
+    private static final int TEMPLATE_UNRESOLVED = -1;
+    private static final int TEMPLATE_MISSING = -2;
+    private static volatile int templateCid = TEMPLATE_UNRESOLVED;
+
+    private static synchronized int resolveTemplateCid() {
+        if (templateCid != TEMPLATE_UNRESOLVED) {
+            return templateCid;
+        }
+        final String sql = """
+                SELECT c.id, c.name, c.level, c.gm,
+                       (SELECT COUNT(*) FROM inventoryitems i
+                         WHERE i.characterid = c.id AND i.inventorytype = -1) AS equipped,
+                       (SELECT COUNT(*) FROM skills s WHERE s.characterid = c.id) AS skills
+                FROM characters c
+                JOIN accounts a ON a.id = c.accountid
+                WHERE a.name = 'fmbot'
+                ORDER BY c.id LIMIT 1""";
+        try (java.sql.Connection con = tools.DatabaseConnection.getConnection();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql);
+             java.sql.ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) {
+                System.err.println("[BotGeneration] FATAL: no character on the 'fmbot' account. "
+                        + "Bots will not spawn. The 162-fmbot-data.sql seed is an INSERT IGNORE "
+                        + "and was skipped, most likely because character id 2 was already taken. "
+                        + "Create a level 1, gm 0 character with no equipment on account 'fmbot'.");
+                templateCid = TEMPLATE_MISSING;
+                return templateCid;
+            }
+            int id = rs.getInt("id");
+            int equipped = rs.getInt("equipped");
+            int skills = rs.getInt("skills");
+            if (equipped > 0 || skills > 0 || rs.getInt("gm") > 0) {
+                // Not fatal - decoration overwrites equipment - but every bot inherits the
+                // skills, and inherited skills the client does not know crash it on attack.
+                System.err.println("[BotGeneration] WARNING: bot template '" + rs.getString("name")
+                        + "' (id " + id + ") has " + equipped + " equipped item(s), " + skills
+                        + " skill(s), gm=" + rs.getInt("gm") + ". A template must be a plain "
+                        + "level 1 character with none of those; bots inherit all of it.");
+            }
+            System.out.println("[BotGeneration] Bot template: '" + rs.getString("name")
+                    + "' id=" + id + " level=" + rs.getInt("level"));
+            templateCid = id;
+        } catch (java.sql.SQLException e) {
+            System.err.println("[BotGeneration] FATAL: could not resolve the bot template: " + e);
+            templateCid = TEMPLATE_MISSING;
+        }
+        return templateCid;
+    }
+
+    /**
      * Worst-case duration of the spawn choreography (pre-drop delay 0.5-1.2s
      * + portal lag 1.5s + drop-down playback + optional turn-around delay
      * 1.0-1.5s + turn playback). Anything that must visually wait for a freshly
@@ -81,7 +145,10 @@ public class BotGeneration {
 
     // forcedJobId > 0 pins the exact job (GM 'trainhere' test spawn); 0 = a random job for the class.
     public static int createBot(Point pos, MapleMap map, int baseClass, int minLevel, int maxLevel, int forcedJobId) {
-        int cid = 2; // CID 2 = Base Bot Character
+        int cid = resolveTemplateCid();
+        if (cid == TEMPLATE_MISSING) {
+            return -1;   // refuse rather than clone whoever happens to hold id 2
+        }
 
         Character bot = null;
         try {
