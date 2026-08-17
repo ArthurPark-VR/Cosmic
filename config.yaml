@@ -204,10 +204,16 @@ server:
     #Other configuration
     SHUTDOWNHOOK: true
     SPAWN_BOTS_ON_STARTUP: true         #SoloMapling: auto-populate the world with bots on server startup (no player/relog needed). Set false to disable bot spawning.
-    BOT_POPULATION_SCALE: 0.12   #Scales every bot cohort at startup. Upstream asks for roughly
-                                 #3000 bots (wave 8 alone requests 2390), which is far more
-                                 #than a home PC or a v83 client handles. 0.15 gives ~450.
-                                 #Raise toward 1.0 for a fuller world, lower if it still lags.
+    BOT_POPULATION_SCALE: 1.0    #Scales every bot cohort at startup: training bots, town
+                                 #presence, and Free Market shops. 1.0 is SoloMapling's own
+                                 #intended population, roughly 3000 bots.
+                                 #
+                                 #Expect a heavy one-time load when you first walk into a busy
+                                 #town - the client has to take in hundreds of avatars at once.
+                                 #That cost is paid once, not continuously; the server itself is
+                                 #scale-tested by its authors to 6571 bots with the load governor
+                                 #never engaging. Lower this only if the lag persists AFTER
+                                 #everything has loaded, which would mean a real server problem.
 
     #Server Flags
     USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
