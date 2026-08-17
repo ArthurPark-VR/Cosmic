@@ -1,8 +1,12 @@
 <#
     One command to update the server.
 
-    Right-click this file and choose "Run with PowerShell", or run  .\update.ps1  from a terminal
-    in this folder.
+    Right-click this file and choose "Run with PowerShell".
+
+    From a terminal, use this rather than .\update.ps1 - Windows blocks unsigned scripts by
+    default, and this form works without changing that setting for the whole machine:
+
+        powershell -ExecutionPolicy Bypass -File .\update.ps1
 
     It exists because config.yaml is the one file both you and the update touch, so a plain
     "git pull" stops with a merge error roughly every time either side edits it. That has already
@@ -14,7 +18,10 @@
     so rather than dropping it quietly.
 #>
 
-$ErrorActionPreference = 'Stop'
+# Continue rather than Stop: every command here is a native one whose failure is checked through
+# $LASTEXITCODE, and Stop makes some PowerShell versions throw on anything git writes to stderr -
+# including ordinary progress output.
+$ErrorActionPreference = 'Continue'
 Set-Location -Path $PSScriptRoot
 
 function Say([string]$text)  { Write-Host $text }
@@ -41,10 +48,19 @@ Say ''
 
 # --- 1. Work out which settings you have changed ------------------------------------------------
 Say 'Checking your settings...'
-$yours    = Read-Settings (Get-Content 'config.yaml')
-$original = Read-Settings ((git show HEAD:config.yaml) -split "`n")
+$yours       = Read-Settings (Get-Content 'config.yaml')
+$originalRaw = git show HEAD:config.yaml 2>$null
+$original    = Read-Settings $originalRaw
+$changed     = @{}
 
-$changed = @{}
+if ($original.Count -eq 0) {
+    # Could not read the previous version to compare against. Carrying nothing across would look
+    # identical to having nothing to carry, so this stops instead of quietly resetting settings.
+    Bad 'Could not read the previous config.yaml to compare against, so your settings cannot be'
+    Bad 'safely preserved. Nothing has been changed. Send this to Claude.'
+    exit 1
+}
+
 foreach ($key in $yours.Keys) {
     if ($original.ContainsKey($key) -and $original[$key] -ne $yours[$key]) {
         $changed[$key] = $yours[$key]
