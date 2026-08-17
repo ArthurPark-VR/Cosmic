@@ -101,6 +101,10 @@ import java.util.function.Predicate;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static soloMapling.ArtificialPlayer.BotHelpers.isBot;
+import soloMapling.server.EventMessageSystem.EventBus;
+import soloMapling.server.EventMessageSystem.EventType;
+import soloMapling.server.EventMessageSystem.GameEvent;
 
 public class MapleMap {
     private static final Logger log = LoggerFactory.getLogger(MapleMap.class);
@@ -424,8 +428,10 @@ public class MapleMap {
             for (Character chr : characters) {
                 if (condition == null || condition.canSpawn(chr)) {
                     if (chr.getPosition().distanceSq(mapobject.getPosition()) <= getRangedDistance()) {
-                        inRangeCharacters.add(chr);
-                        chr.addVisibleMapObject(mapobject);
+                        if (!isBot(chr)) {
+                            inRangeCharacters.add(chr);
+                            chr.addVisibleMapObject(mapobject);
+                        }
                     }
                 }
             }
@@ -921,6 +927,10 @@ public class MapleMap {
         droppedItems.put(mdrop, !everlast ? Server.getInstance().getCurrentTime() + YamlConfig.config.server.ITEM_EXPIRE_TIME : Long.MAX_VALUE);
     }
 
+    private void registerItemDropNoExpire(MapItem mdrop) {
+        droppedItems.put(mdrop, Long.MAX_VALUE);
+    }
+
     private void unregisterItemDrop(MapItem mdrop) {
         objectWLock.lock();
         try {
@@ -1092,8 +1102,8 @@ public class MapleMap {
         spawnAndAddRangedMapObject(mdrop, c -> {
             mdrop.lockItem();
             try {
-                c.sendPacket(PacketCreator.dropItemFromMapObject(c.getPlayer(), mdrop, dropper.getPosition(), droppos,
-                        (byte) 1, delay));
+                c.sendPacket(PacketCreator.dropItemFromMapObject(owner, mdrop, dropper.getPosition(), droppos,
+                        (byte) 1, delay)); // formerly c.getPlayer()
             } finally {
                 mdrop.unlockItem();
             }
@@ -1171,6 +1181,32 @@ public class MapleMap {
 
     public final List<MapObject> getMonsters() {
         return getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.MONSTER));
+    }
+
+    public final List<MapObject> getHiredMerchants() {
+        return getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.HIRED_MERCHANT));
+    }
+
+    public final List<MapObject> getPlayerStores() {
+        return getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.SHOP));
+    }
+
+    public final List<PlayerShop> getAllPlayerShops() {
+        List<PlayerShop> list = new LinkedList<>();
+        for (MapObject mmo : getPlayerStores()) {
+            list.add((PlayerShop) mmo);
+        }
+
+        return list;
+    }
+
+    public final List<HiredMerchant> getAllHiredMerchants() {
+        List<HiredMerchant> list = new LinkedList<>();
+        for (MapObject mmo : getHiredMerchants()) {
+            list.add((HiredMerchant) mmo);
+        }
+
+        return list;
     }
 
     public final List<Reactor> getAllReactors() {
@@ -1268,9 +1304,9 @@ public class MapleMap {
         return count;
     }
 
-     public boolean damageMonster(Character chr, Monster monster, int damage) {
+    public boolean damageMonster(Character chr, Monster monster, int damage) {
         return damageMonster(chr, monster, damage, (short) 0);
-     }
+    }
 
     public boolean damageMonster(final Character chr, final Monster monster, final int damage, short delay) {
         if (monster.getId() == MobId.ZAKUM_1) {
@@ -1892,6 +1928,20 @@ public class MapleMap {
         }
     }
 
+    // Public read-only snapshot of every monster spawn point's position, from the static .wz spawn
+    // layout (the spawn lists themselves stay private). Used by the bot grind-spot scoring to find
+    // which walkable ledges have the densest spawns.
+    public List<java.awt.Point> getMonsterSpawnPositions() {
+        List<java.awt.Point> positions = new ArrayList<>();
+        for (SpawnPoint sp : getAllMonsterSpawn()) {
+            java.awt.Point p = sp.getPosition();
+            if (p != null) {
+                positions.add(new java.awt.Point(p));
+            }
+        }
+        return positions;
+    }
+
     public void spawnAllMonsterIdFromMapSpawnList(int id) {
         spawnAllMonsterIdFromMapSpawnList(id, 1, false);
     }
@@ -2144,6 +2194,66 @@ public class MapleMap {
         activateItemReactors(mdrop, owner.getClient());
     }
 
+    public final MapItem spawnItemDropNoExpire(final MapObject dropper, final Character owner, final Item item, Point pos,
+                                    final boolean ffaDrop, final boolean playerDrop) {
+        if (FieldLimit.DROP_LIMIT.check(this.getFieldLimit())) {
+            this.disappearingItemDrop(dropper, owner, item, pos);
+            return null;
+        }
+
+        final Point droppos = calcDropPos(pos, pos);
+        final MapItem mdrop = new MapItem(item, droppos, dropper, owner, owner.getClient(), (byte) (ffaDrop ? 2 : 0), playerDrop);
+        mdrop.setDropTime(Server.getInstance().getCurrentTime());
+
+        spawnAndAddRangedMapObject(mdrop, c -> {
+            mdrop.lockItem();
+            try {
+                c.sendPacket(PacketCreator.dropItemFromMapObject(c.getPlayer(), mdrop, dropper.getPosition(), droppos,
+                        (byte) 1, (short) 0));
+            } finally {
+                mdrop.unlockItem();
+            }
+        }, null);
+
+        mdrop.lockItem();
+        try {
+            broadcastItemDropMessage(mdrop, dropper.getPosition(), droppos, (byte) 0, (short) 0);
+        } finally {
+            mdrop.unlockItem();
+        }
+
+        // Use no-expire registration instead of standard
+        if (droppedItemCount.get() >= YamlConfig.config.server.ITEM_LIMIT_ON_MAP) {
+            MapObject mapobj;
+            do {
+                mapobj = null;
+                objectWLock.lock();
+                try {
+                    while (mapobj == null) {
+                        if (registeredDrops.isEmpty()) {
+                            break;
+                        }
+                        mapobj = registeredDrops.remove(0).get();
+                    }
+                } finally {
+                    objectWLock.unlock();
+                }
+            } while (!makeDisappearItemFromMap(mapobj));
+        }
+
+        objectWLock.lock();
+        try {
+            registerItemDropNoExpire(mdrop);
+            registeredDrops.add(new WeakReference<>(mdrop));
+        } finally {
+            objectWLock.unlock();
+        }
+        droppedItemCount.incrementAndGet();
+
+        activateItemReactors(mdrop, owner.getClient());
+        return mdrop;
+    }
+
     private void registerMapSchedule(Runnable r, long delay) {
         OverallService service = (OverallService) this.getChannelServer().getServiceAccess(ChannelServices.OVERALL);
         service.registerOverallAction(mapid, r, delay);
@@ -2312,7 +2422,13 @@ public class MapleMap {
 
         chr.setMapId(mapid);
         chr.updateActiveEffects();
-        
+
+        if (!isBot(chr)) {
+            GameEvent mapEnteredEvent = new GameEvent(chr, EventType.MAP_ENTERED,
+                    "Entered map " + mapid, null, null);
+            EventBus.getInstance().publish(mapEnteredEvent);
+        }
+
         if (this.getHPDec() > 0) {
             getWorldServer().addPlayerHpDecrease(chr);
         } else {
@@ -2326,11 +2442,11 @@ public class MapleMap {
                 aggroMonitor.startAggroCoordinator();
             }
 
-            if (onFirstUserEnter.length() != 0) {
+            if (onFirstUserEnter.length() != 0 && !isBot(chr)) { // Only do it for non-bots
                 msm.runMapScript(chr.getClient(), "onFirstUserEnter/" + onFirstUserEnter, true);
             }
         }
-        if (onUserEnter.length() != 0) {
+        if (onUserEnter.length() != 0 && !isBot(chr)) {
             if (onUserEnter.equals("cygnusTest") && !MapId.isCygnusIntro(mapid)) {
                 chr.saveLocation("INTRO");
             }
@@ -2449,11 +2565,6 @@ public class MapleMap {
         }
 
         sendObjectPlacement(chr.getClient());
-
-        // Bots already standing here were just described to this client as falling, with no
-        // foothold - the spawn packet says that about everyone. A real player's own client
-        // corrects it instantly; a bot's cannot, so it is corrected for them here.
-        server.bot.BotWorld.settleAllFor(chr);
 
         if (isStartingEventMap() && !eventStarted()) {
             chr.getMap().getPortal("join00").setPortalStatus(false);
@@ -2596,11 +2707,10 @@ public class MapleMap {
         return null;
     }
 
-    /*
+    // GCMoveSystem: restored to let the dynamic nav-graph baker enumerate portals.
     public Collection<Portal> getPortals() {
         return Collections.unmodifiableCollection(portals.values());
     }
-    */
 
     public void addPlayerPuppet(Character player) {
         for (Monster mm : this.getAllMonsters()) {
@@ -2722,7 +2832,7 @@ public class MapleMap {
         chrRLock.lock();
         try {
             for (Character chr : characters) {
-                if (chr != source) {
+                if (chr != source && !isBot(chr)) { // only do it for non-bots
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
                             chr.sendPacket(packet);
@@ -2997,6 +3107,37 @@ public class MapleMap {
         return footholds;
     }
 
+    // ── GCMoveSystem (GreenCat dynamic movement) terrain model ──
+    // Populated by MapFactory from WZ (ladderRope / info.fs / info.swim). Read by the
+    // dynamic physics/nav engine off the LIVE map.
+    private final java.util.List<Rope> ropes = new java.util.ArrayList<>();
+    private float footholdSpeed = 1.0f;
+    private boolean swim = false;
+
+    public void addRope(Rope rope) {
+        ropes.add(rope);
+    }
+
+    public java.util.List<Rope> getRopes() {
+        return ropes;
+    }
+
+    public float getFootholdSpeed() {
+        return footholdSpeed;
+    }
+
+    public void setFootholdSpeed(float footholdSpeed) {
+        this.footholdSpeed = footholdSpeed;
+    }
+
+    public boolean isSwim() {
+        return swim;
+    }
+
+    public void setSwim(boolean swim) {
+        this.swim = swim;
+    }
+
     public void setMapPointBoundings(int px, int py, int h, int w) {
         mapArea.setBounds(px, py, w, h);
     }
@@ -3168,6 +3309,39 @@ public class MapleMap {
                 player.addVisibleMapObject(mo);
             }
         }
+    }
+
+    public void moveBot(Character player, Point newPosition) {
+        player.setPosition(newPosition);
+
+//        // is this try needed? idk
+//        try {
+//            MapObject[] visibleObjects = player.getVisibleMapObjects();
+//
+//            Map<Integer, MapObject> mapObjects = getCopyMapObjects();
+//            for (MapObject mo : visibleObjects) {
+//                if (mo != null) {
+//                    if (mapObjects.get(mo.getObjectId()) == mo) {
+//                        updateMapObjectVisibility(player, mo);
+//                    } else {
+//                        player.removeVisibleMapObject(mo);
+//                    }
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+//        for (MapObject mo : getMapObjectsInRange(player.getPosition(), getRangedDistance(), rangedMapobjectTypes)) {
+//            if (!player.isMapObjectVisible(mo)) {
+//                try {
+////                    mo.sendSpawnData(player.getClient()); // not needed. cause a lot of MapItem errors
+//                    player.addVisibleMapObject(mo);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
     }
 
     public final void toggleEnvironment(final String ms) {
@@ -3522,7 +3696,8 @@ public class MapleMap {
     }
 
     private static double getCurrentSpawnRate(int numPlayers) {
-        return 0.70 + (0.05 * Math.min(6, numPlayers));
+        // SoloMapling experiment: halved density, 2x pass rate — see Fable Plan 2026-07-07
+        return 0.35 + (0.025 * Math.min(6, numPlayers));
     }
 
     private int getNumShouldSpawn(int numPlayers) {
@@ -4007,7 +4182,8 @@ public class MapleMap {
         ht.setParentMobOid(htIntro.getObjectId());
         ht.addListener(new MonsterListener() {
             @Override
-            public void monsterKilled(int aniTime) {}
+            public void monsterKilled(int aniTime) {
+            }
 
             @Override
             public void monsterDamaged(Character from, int trueDmg) {
@@ -4027,7 +4203,8 @@ public class MapleMap {
 
             m.addListener(new MonsterListener() {
                 @Override
-                public void monsterKilled(int aniTime) {}
+                public void monsterKilled(int aniTime) {
+                }
 
                 @Override
                 public void monsterDamaged(Character from, int trueDmg) {

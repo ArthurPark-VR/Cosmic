@@ -27,7 +27,11 @@ public enum WZFiles {
     }
 
     public Path getFile() {
-        return Path.of(DIRECTORY, fileName);
+        // Resolved per call, not from the DIRECTORY constant: DIRECTORY freezes whatever
+        // "wz-path" held when this enum first loaded, which breaks test suites where one
+        // test (MobSkillFactoryTest) points the property at a fixture directory. At
+        // runtime the property never changes, so behavior is identical.
+        return Path.of(getWzDirectory(), fileName);
     }
 
     public String getFilePath() {

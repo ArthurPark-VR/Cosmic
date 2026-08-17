@@ -41,7 +41,6 @@ public final class SpouseChatHandler extends AbstractPacketHandler {
                 spouse.sendPacket(PacketCreator.OnCoupleMessage(c.getPlayer().getName(), msg, true));
                 c.sendPacket(PacketCreator.OnCoupleMessage(c.getPlayer().getName(), msg, true));
                 ChatLogger.log(c, "Spouse", msg);
-                server.bot.BotChat.onSpouseChat(c.getPlayer(), msg);
             } else {
                 c.getPlayer().dropMessage(5, "Your spouse is currently offline.");
             }

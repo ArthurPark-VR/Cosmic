@@ -112,11 +112,6 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                         BuddyAddResult buddyAddResult = null;
                         if (channel != -1) {
                             buddyAddResult = world.requestBuddyAdd(addName, c.getChannel(), player.getId(), player.getName());
-                            // A bot has no window to click, so it answers its own request. Without
-                            // this it stays pending forever and shows as permanently offline.
-                            if (otherChar != null && otherChar.isBot()) {
-                                server.bot.BotSocial.onBuddyRequest(otherChar, player.getId(), player.getName(), c.getChannel());
-                            }
                         } else {
                             try (Connection con = DatabaseConnection.getConnection()) {
                                 try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) as buddyCount FROM buddies WHERE characterid = ? AND pending = 0")) {

@@ -1,5 +1,6 @@
 package server.life;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,11 +21,26 @@ class MobSkillFactoryTest {
     @TempDir
     private Path wzPath;
 
+    // The global wz-path property is shared by every WZ-dependent test in the suite;
+    // pointing it at this test's tiny fixture must not leak past this class or later
+    // map-loading tests fail with "Map data not found" (they pass in isolation).
+    private String originalWzPath;
+
     @BeforeEach
     void setWzPath() {
         MockitoAnnotations.openMocks(this);
         writeTestFileToTempDir();
+        originalWzPath = System.getProperty("wz-path");
         System.setProperty("wz-path", "%s/wz".formatted(wzPath.toString()));
+    }
+
+    @AfterEach
+    void restoreWzPath() {
+        if (originalWzPath != null) {
+            System.setProperty("wz-path", originalWzPath);
+        } else {
+            System.clearProperty("wz-path");
+        }
     }
 
     private void writeTestFileToTempDir() {

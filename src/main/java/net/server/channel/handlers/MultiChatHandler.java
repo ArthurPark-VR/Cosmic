@@ -63,11 +63,9 @@ public final class MultiChatHandler extends AbstractPacketHandler {
         } else if (type == 1 && player.getParty() != null) {
             world.partyChat(player.getParty(), chattext, player.getName());
             ChatLogger.log(c, "Party", chattext);
-            server.bot.BotChat.onPartyChat(player, chattext);
         } else if (type == 2 && player.getGuildId() > 0) {
             Server.getInstance().guildChat(player.getGuildId(), player.getName(), player.getId(), chattext);
             ChatLogger.log(c, "Guild", chattext);
-            server.bot.BotChat.onGuildChat(player, chattext);
         } else if (type == 3 && player.getGuild() != null) {
             int allianceId = player.getGuild().getAllianceId();
             if (allianceId > 0) {

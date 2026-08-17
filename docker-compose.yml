@@ -1,22 +1,16 @@
+version: '3'
 services:
   maplestory:
     build: .
     depends_on:
-      # Wait until MySQL actually answers queries, not just until the container starts.
-      # Without this the server races the database on first boot (when MySQL is still
-      # initialising its data directory) and spends its startup timeout retrying.
-      db:
-        condition: service_healthy
+      - db
     ports:
-      # Bound to 127.0.0.1 so the server is reachable from this machine only.
-      # To let other people connect, drop the "127.0.0.1:" prefix on both lines,
-      # set HOST in config.yaml to your public IP, and forward these ports.
       # Login server
-      - "127.0.0.1:8484:8484"
+      - "8484:8484"
       # Channels.
       # Format: WWCC, where WW is 75 plus the world number and CC is 75 plus the channel number (both zero indexed).
       # In this case, world 1 channels 1-3.
-      - "127.0.0.1:7575-7577:7575-7577"
+      - "7575-7577:7575-7577"
     volumes:
       # Config changes can be reloaded without rebuilding the image.
       # Still requires a redeployment as they're sourced on startup.
@@ -25,21 +19,16 @@ services:
       - ./wz:/opt/server/wz
     environment:
       DB_HOST: "db" ## Remember if this is present it will OVERRIDE the host in the config.yaml, if you put here anything other than db, you'll need to change the config.yaml jdbc string to port 3307, and not port 3306
-
+    
   ollama:
-    # Local LLM used for bot dialogue. Deliberately NOT in maplestory's depends_on:
-    # the server must boot and run normally when this is down or absent, falling back
-    # to canned lines. Treat it as optional infrastructure, never a hard dependency.
+    # Local LLM for bot dialogue. Deliberately NOT in maplestory's depends_on: the server must
+    # boot and run normally when this is down or absent.
     image: ollama/ollama
     volumes:
-      # Downloaded models live here so they survive `docker compose down`.
       - ./ollama:/root/.ollama
     ports:
-      # Loopback-only, like everything else. Lets you curl it or run `ollama` commands
-      # from the host: docker compose exec ollama ollama pull llama3.1:8b
       - "127.0.0.1:11434:11434"
-    # If you have an NVIDIA GPU and the container toolkit installed, uncomment for a
-    # large speedup. CPU-only works fine for short in-character replies, just slower.
+    # Uncomment for an NVIDIA GPU with the container toolkit installed.
     # deploy:
     #   resources:
     #     reservations:
@@ -55,15 +44,6 @@ services:
       MYSQL_ROOT_PASSWORD: ""
       MYSQL_ALLOW_EMPTY_PASSWORD: yes
     ports:
-      # Also loopback-only. This is here so you can point a database client
-      # (HeidiSQL, DBeaver, ...) at localhost:3307 to inspect your data.
-      - "127.0.0.1:3307:3306"
+      - "3307:3306"
     volumes:
       - ./database/docker-db-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      # First run has to initialise the data directory, which takes a while.
-      start_period: 60s

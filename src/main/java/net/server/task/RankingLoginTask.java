@@ -30,7 +30,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 
 /**
  * @author Matze
@@ -70,12 +69,11 @@ public class RankingLoginTask implements Runnable {
                     int rankMove = 0;
                     rank++;
 
-                    // Null for an account that has never been logged into. The bot cast's owner
-                    // account is one by design, and any account created but never used is another.
-                    // Treated as the distant past, which is what "never logged in" means for a
-                    // rank-movement comparison. Without this one such account aborts the entire
-                    // ranking pass, so nobody's rank updates.
-                    final Timestamp lastloginStamp = rs.getTimestamp("lastlogin");
+                    // Null for an account that has never been logged into - any account created
+                    // but never used. Treated as the distant past, which is what "never logged in"
+                    // means for a rank-movement comparison. Without this, one such account aborts
+                    // the entire ranking pass and nobody's rank updates.
+                    final java.sql.Timestamp lastloginStamp = rs.getTimestamp("lastlogin");
                     final long lastlogin = lastloginStamp != null ? lastloginStamp.getTime() : 0L;
                     if (lastlogin < lastUpdate || rs.getInt("loggedin") > 0) {
                         rankMove = rs.getInt((job != -1 ? "jobRankMove" : "rankMove"));

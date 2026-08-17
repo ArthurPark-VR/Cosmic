@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Removes the previous, abandoned bot implementation.
+
+        That version gave bots real rows in `characters` on a system account. SoloMapling's bots
+        are in-memory objects instead, so those rows are now orphans: 21 characters nothing loads,
+        owned by an account nobody can log into.
+
+        They are not merely untidy. RankingLoginTask reads accounts.lastlogin and calls getTime()
+        on it without a null check, and that account has none, so leaving it in place means the
+        hourly ranking pass throws and aborts - taking the rankings for real characters with it.
+
+        Guarded with IF EXISTS throughout: on a database that never ran the old migrations this
+        changeset is a no-op, and it must stay one.
+    -->
+    <changeSet id="drop-old-bot-tables-1" author="cosmic-local">
+        <sql splitStatements="true" endDelimiter=";">
+            DELETE FROM characters WHERE accountid IN (SELECT id FROM accounts WHERE name = 'botsystem');
+            DELETE FROM accounts WHERE name = 'botsystem';
+
+            DROP TABLE IF EXISTS bot_relationship;
+            DROP TABLE IF EXISTS bot_progress;
+            DROP TABLE IF EXISTS bot_memory;
+            DROP TABLE IF EXISTS bot_goal;
+            DROP TABLE IF EXISTS bot_persona;
+        </sql>
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

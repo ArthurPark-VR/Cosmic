@@ -563,7 +563,6 @@ public class StatEffect {
                 case Hero.STANCE:
                 case Paladin.STANCE:
                 case DarkKnight.STANCE:
-                case ThunderBreaker.STANCE:
                 case Aran.FREEZE_STANDING:
                     statups.add(new Pair<>(BuffStat.STANCE, iprop));
                     break;
@@ -636,7 +635,6 @@ public class StatEffect {
                     break;
                 case Bowmaster.SHARP_EYES:
                 case Marksman.SHARP_EYES:
-                case ThunderBreaker.SHARP_EYES:
                     statups.add(new Pair<>(BuffStat.SHARP_EYES, ret.x << 8 | ret.y));
                     break;
                 case WindArcher.WIND_WALK:
@@ -723,7 +721,6 @@ public class StatEffect {
                 case Buccaneer.MAPLE_WARRIOR:
                 case Aran.MAPLE_WARRIOR:
                 case Evan.MAPLE_WARRIOR:
-                case ThunderBreaker.MAPLE_WARRIOR:
                     statups.add(new Pair<>(BuffStat.MAPLE_WARRIOR, ret.x));
                     break;
                 // SUMMON
@@ -931,6 +928,16 @@ public class StatEffect {
     }
 
     /**
+     * Grant this buff to {@code target} as if cast by {@code caster}, via the
+     * internal non-primary apply path: the target gets the real, working buff
+     * (stat + icons + foreign aura) with NO MP cost and NO cast animation on them.
+     * Lets SoloMapling bots hand party/support buffs to nearby players and bots.
+     */
+    public boolean applyToTarget(Character caster, Character target) {
+        return applyTo(caster, target, false, null, false, 1);
+    }
+
+    /**
      * Applies this effect to a player as though someone else had cast it on them, so none of
      * the caster-side costs are charged - no MP, no HP, no item consumption - and it isn't
      * propagated to nearby party members.
@@ -938,6 +945,10 @@ public class StatEffect {
      * For buffs granted by the server rather than cast by the player. Charging MP there would
      * drain the player on every refresh, and worse, leave them unbuffed whenever their MP was
      * below the cost, since applyHpMpChange refuses the change and the whole effect aborts.
+     *
+     * The same shape as applyToTarget above, which SoloMapling added for bot-cast buffs. Both
+     * are kept: they read differently at their call sites and neither is worth bending to fit
+     * the other.
      */
     public boolean applyToWithoutCost(Character chr) {
         return applyTo(chr, chr, false, null, false, 1);
@@ -1231,6 +1242,19 @@ public class StatEffect {
         }
         Rectangle bounds = new Rectangle(mylt.x, mylt.y, myrb.x - mylt.x, myrb.y - mylt.y);
         return bounds;
+    }
+
+    /**
+     * The skill's WZ attack rectangle, anchored at {@code from} and mirrored for facing
+     * (the same geometry the skill's own hit detection uses), or null if the skill defines
+     * no lt/rb range. Lets SoloMapling bots size their attack reach from real game data
+     * instead of hand-tuned boxes.
+     */
+    public Rectangle getAttackBox(Point from, boolean facingLeft) {
+        if (lt == null || rb == null) {
+            return null;
+        }
+        return calculateBoundingBox(from, facingLeft);
     }
 
     public int getBuffLocalDuration() {
@@ -1561,7 +1585,7 @@ public class StatEffect {
         return false;
     }
 
-    private boolean isPartyBuff() {
+    public boolean isPartyBuff() {
         if (lt == null || rb == null) {
             return false;
         }
@@ -1719,7 +1743,6 @@ public class StatEffect {
             case Shadower.HEROS_WILL:
             case Buccaneer.PIRATES_RAGE:
             case Aran.HEROS_WILL:
-            case ThunderBreaker.HEROS_WILL:
                 return true;
 
             default:

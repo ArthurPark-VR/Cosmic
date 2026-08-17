@@ -2281,40 +2281,6 @@ public class PacketCreator {
         return p;
     }
 
-    /**
-     * A movement packet built from nothing rather than rebroadcast from a client.
-     *
-     * <p>Every other movement packet in this server is a relay: a player's client computes the
-     * path, sends the bytes, and the server forwards them untouched. A character with nobody
-     * connected to it has no client to compute anything, so the bytes have to be written here.
-     *
-     * <p>Emits a single command 0 (absolute move) fragment, whose layout is the one
-     * AbstractMovementPacketHandler parses: position, wobble, foothold, stance, duration. One
-     * fragment is enough - the receiving client tweens between where it last saw the character
-     * and where this says it is, so a walk is a sequence of these rather than a dense path.
-     *
-     * @param stance   even = facing right, odd = facing left; 4/5 is the walking pair
-     * @param duration milliseconds the client should take to play the movement out
-     */
-    public static Packet moveCharacterTo(int chrId, Point from, Point to, int footholdId,
-                                         int stance, int duration) {
-        OutPacket p = OutPacket.create(SendOpcode.MOVE_PLAYER);
-        p.writeInt(chrId);
-        p.writeInt(0);
-
-        // Movement list: one command.
-        p.writeByte(1);
-        p.writeByte(0);                     // command 0, absolute move
-        p.writeShort(to.x);
-        p.writeShort(to.y);
-        p.writeShort(to.x - from.x);        // xwobble, read by the client as horizontal speed
-        p.writeShort(0);                    // ywobble
-        p.writeShort(footholdId);
-        p.writeByte(stance);
-        p.writeShort(duration);
-        return p;
-    }
-
     public static Packet moveSummon(int cid, int oid, Point startPos, InPacket movementPacket, long movementDataLength) {
         final OutPacket p = OutPacket.create(SendOpcode.MOVE_SUMMON);
         p.writeInt(cid);
@@ -3293,17 +3259,19 @@ public class PacketCreator {
     }
 
     /**
-     * @param c
+     * Fix by Noob + Madara - change param Character to player, checks if player is owner
+     * Writes the the index of the player's slot. Before was hard coded to either 0 (owner) or 1 (slot 1).
      * @param shop
-     * @param owner
+     * @param player
      * @return
      */
-    public static Packet getPlayerShop(PlayerShop shop, boolean owner) {
+    public static Packet getPlayerShop(PlayerShop shop, Character player) {
         final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
+        boolean owner = shop.isOwner(player);
         p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
         p.writeByte(4);
         p.writeByte(4);
-        p.writeByte(owner ? 0 : 1);
+        p.writeByte(owner ? 0 : player.getSlot()); // Slot of player
 
         if (owner) {
             List<PlayerShop.SoldItem> sold = shop.getSold();
@@ -4362,24 +4330,24 @@ public class PacketCreator {
      * Sends a player hint.
      *
      * @param hint   The hint it's going to send.
-     * @param width  How tall the box is going to be.
-     * @param height How long the box is going to be.
+     * @param width  How long the box is going to be.
+     * @param duration How long the box is going last.
      * @return The player hint packet.
      */
-    public static Packet sendHint(String hint, int width, int height) {
+    public static Packet sendHint(String hint, int width, int duration) {
         if (width < 1) {
             width = hint.length() * 10;
             if (width < 40) {
                 width = 40;
             }
         }
-        if (height < 5) {
-            height = 5;
+        if (duration > 1 && duration < 5) {
+            duration = 5;
         }
         final OutPacket p = OutPacket.create(SendOpcode.PLAYER_HINT);
         p.writeString(hint);
         p.writeShort(width);
-        p.writeShort(height);
+        p.writeShort(duration);
         p.writeByte(1);
         return p;
     }
@@ -6169,7 +6137,8 @@ public class PacketCreator {
         if (item == null) {
             p.writeByte(0);
         } else {
-            p.writeByte(item.getPosition());
+//            p.writeByte(item.getPosition()); // changed to 1 for bots to show item
+            p.writeByte((short) 1);
             addItemInfo(p, item, true);
         }
         return p;

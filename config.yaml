@@ -4,14 +4,14 @@
 worlds:
     #Properties for Scania 0
   - flag: 0
-    server_message: Welcome to Scania!
+    server_message: ""
     event_message: Scania!
     why_am_i_recommended: Welcome to Scania!
     channels: 3
-    exp_rate: 5
-    meso_rate: 3
-    drop_rate: 3
-    boss_drop_rate: 3                       #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
+    exp_rate: 2
+    meso_rate: 2
+    drop_rate: 2
+    boss_drop_rate: 5                      #NOTE: Boss drop rate OVERRIDES common drop rate, for bosses-only.
     quest_rate: 5                           #Multiplier for Exp & Meso gains when completing a quest. Only available when USE_QUEST_RATE is true. Stacks with server Exp & Meso rates.
     fishing_rate: 10                        #Multiplier for success likelihood on meso thrown during fishing.
     travel_rate: 10                         #Means of transportation rides/departs using 1/N of the default time.
@@ -169,21 +169,17 @@ server:
     WORLDS: 1                           #Initial number of worlds on the server.
     WLDLIST_SIZE: 21                    #Max possible worlds on the server.
     CHANNEL_SIZE: 20                    #Max possible channels per world (which is 20, based on the channel list on login phase).
-    CHANNEL_LOAD: 100                   #Max players per channel (limit actually used to calculate the World server capacity).
+    CHANNEL_LOAD: 2000                   #Max players per channel (limit actually used to calculate the World server capacity).
     CHANNEL_LOCKS: 20                   #Total number of structure management locks each channel has.
 
-    RESPAWN_INTERVAL: 3000              #3 seconds. Default is 10000. How often the respawn task
-                                        #tops maps back up to full spawn density. Individual spawn
-                                        #points still honour their own mobTime cooldown from the
-                                        #map data, so some maps will refill slower than this.
-                                        #Also governs Monster Carnival respawns.
+    RESPAWN_INTERVAL: 4000              #SoloMapling respawn experiment: 5s pass (was 10000) - see Fable Plan 2026-07-07. git revert to restore stock.
     PURGING_INTERVAL: 300000            #5 minutes, 300000.
     RANKING_INTERVAL: 3600000           #60 minutes, 3600000.
     COUPON_INTERVAL: 3600000            #60 minutes, 3600000.
     UPDATE_INTERVAL: 777                #Dictates the frequency on which the "centralized server time" is updated.
 
-    ENABLE_PIC: true               #Pick true/false to enable or disable Pic. Delete character requires PIC available.
-    ENABLE_PIN: true               #Pick true/false to enable or disable Pin.
+    ENABLE_PIC: false               #Pick true/false to enable or disable Pic. Delete character requires PIC available.
+    ENABLE_PIN: false               #Pick true/false to enable or disable Pin.
 
     BYPASS_PIC_EXPIRATION: 20           #Enables PIC bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
     BYPASS_PIN_EXPIRATION: 15           #Enables PIN bypass, which will remain active for that account by that client machine for N minutes. Set 0 to disable.
@@ -205,191 +201,9 @@ server:
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
     GMSERVER: false
 
-    #Monster Skills
-    #Mob skills listed here never take effect - the monster still uses the skill and plays
-    #its animation, but nothing is applied to the player. Names come from MobSkillType;
-    #anything unrecognised is logged and ignored rather than breaking the mob.
-    #DISPEL is worth blocking on a server with global buffs, since one cast strips them
-    #until the next refresh. SEDUCE takes away control of your character.
-    #Other names you may want: STUN, SEAL, CURSE, DARKNESS, WEAKNESS, SLOW, POISON,
-    #BANISH, REVERSE_INPUT, UNDEAD, FEAR, STOP_POTION, STOP_MOTION, SEAL_SKILL.
-    #Leave the list empty for vanilla behaviour.
-    DISABLED_MOB_SKILLS:
-      - DISPEL
-      - SEDUCE
-
-    #Command Access
-    #Floor applied to every character's GM level as it loads, so it covers characters that
-    #already exist as well as new ones. A character's stored level is used if it is higher,
-    #so this never demotes anyone.
-    #The command tiers are named, in order: 0 Common, 1 Donator, 2 JrGM, 3 GM, 4 SuperGM,
-    #5 Developer, 6 Admin. Tier 1 "Donator" grants @goto, @buffme, @whodrops and
-    #@whatdropsfrom.
-    #Note that isGM() is defined as level > 1, so tier 1 is NOT treated as a GM anywhere -
-    #no auto-hide, no trade/storage/drop restrictions, no admin flag, and skill job-tree
-    #checks still apply as normal. Set to 0 for vanilla behaviour.
-    MINIMUM_GM_LEVEL: 1
-
-    #Global Buffs
-    #Keeps a fixed set of buffs active on every player, regardless of job or level.
-    #Applied on login and refreshed on the interval below. Skills are applied at their max
-    #level. GLOBAL_BUFF_INTERVAL must stay comfortably below the SHORTEST duration in the
-    #list, or that buff will lapse between refreshes - the shortest here is 5 minutes.
-    USE_GLOBAL_BUFFS: true
-    GLOBAL_BUFF_INTERVAL: 3             #Minutes between refreshes.
-    GLOBAL_BUFF_SKILLS:
-      # GM versions - stronger than the player ones and valid for any class. 15 min each.
-      - 9101008                         #Hyper Body    +60% max HP/MP
-      - 9101003                         #Bless         +20 att/matk, +100 def/mdef/acc/avoid
-      - 9101002                         #Holy Symbol   +50% exp
-      - 9101001                         #Haste         +40 speed, +20 jump
-      # Stand-ins for the Thunder Breaker 4th job skills. These are the ORIGINAL ids, not
-      # the custom 15121xxx ones: identical effects, but the client already knows them, so
-      # the buff icons render and no client-side .wz edit is needed for these to work.
-      - 1121002                         #Power Stance  90% knockback resist.  5 min
-      - 3121002                         #Sharp Eyes    +crit rate and damage. 5 min
-      - 5121000                         #Maple Warrior +15% all stats.       15 min
-
-    #Pirate Energy Charge
-    #Vanilla: each monster hit adds 102 to a 10000 bar, so the bar needs 99 hits to fill, and
-    #once full it drains completely after the skill's duration (40s at level 10, 50s at 20).
-    #Against a boss there is only one target per swing, so it refills at the slowest possible
-    #rate right where it matters most. With this on, the first hit fills the bar and the charge
-    #never drains for the rest of the session. Applies to Thunder Breaker and Marauder alike.
-    PERMANENT_ENERGY_CHARGE: true
-
-    #Thief Dark Sight
-    #Attacking normally drops Dark Sight: CloseRangeDamageHandler and RangedAttackHandler both
-    #cancel the buff the moment you land a hit. With this on, neither does, so it holds until you
-    #cancel it or log out - nothing else in the server cancels it, including taking damage.
-    #For a Night Walker that also keeps Vanish's bonus up permanently (1.3x at level 10), since
-    #the client applies that multiplier while Dark Sight is active.
-    #NOTE: the server applies no damage mitigation of its own for Dark Sight - TakeDamageHandler
-    #never looks at it. Whether monsters actually stop touching you is client-side aggro
-    #behaviour, and bosses do not always respect it.
-    PERMANENT_DARK_SIGHT: true
-
-    #Bot LLM dialogue
-    #Local model used to give bots free-form personality. Runs against the `ollama` service in
-    #docker-compose.yml, so it costs nothing beyond the hardware you already own.
-    #This is the interaction half of a hybrid design: ambient wandering chatter stays canned and
-    #rule-based (instant, free), and the model is called ONLY when someone actually talks to a
-    #bot or a bot's goal changes. Never call it on a tick.
-    #The server tolerates this being unreachable - every failure path falls back to canned lines,
-    #which is why the ollama service is deliberately absent from maplestory's depends_on.
-    USE_BOT_LLM: true                   #Needs a model pulled, see below.
-    BOT_LLM_ENDPOINT: "http://ollama:11434"   #Container-network name. Use http://localhost:11434
-                                        #instead if you run the server outside Docker.
-    BOT_LLM_MODEL: "llama3.1:8b"        #Pull it once with:
-                                        #  docker compose exec ollama ollama pull llama3.1:8b
-                                        #~5GB at Q4, fits 8GB VRAM, 40+ tok/s. Qwen3 8B also fine.
-    BOT_LLM_TIMEOUT_MS: 8000            #Give up and use a canned line past this. CPU-only
-                                        #inference is slower; raise it if replies get dropped.
-    BOT_LLM_MAX_TOKENS: 120             #Generation cap. A bot that monologues cannot be sent as
-                                        #chat anyway, and a tighter cap means faster replies.
-    BOT_LLM_MAX_REPLY_CHARS: 300        #Hard cap after generation, truncated at a sentence end
-                                        #where possible. Chat is a single line.
-
-    #Bot progression (currently Wren, the Aran, who starts at level 10)
-    #Level is DERIVED from elapsed real time plus conversations held, not stored and ticked, so
-    #there is no scheduler, nothing drifts, and time passes correctly while the server is off.
-    #At 8 hours per level that is 3 levels/day, so level 10 -> 70 lands around three weeks.
-    #Talking to them accelerates it, so your involvement visibly matters.
-    #Wren's voice is written to change with the number: hesitant early, steady in the middle,
-    #economical and certain late. It is the one persona meant to be inconsistent over time.
-    BOT_PROGRESS_HOURS_PER_LEVEL: 8     #Real hours per level from the passage of time alone.
-    BOT_PROGRESS_TALKS_PER_LEVEL: 15    #Extra level per this many conversations.
-    BOT_PROGRESS_MAX_LEVEL: 200
-
-    #Bot bodies
-    #Whether the cast exists as real characters standing in the world, rather than only as names
-    #you can whisper. A body is a real row in `characters` on a banned system account, because
-    #party, guild, buddy and marriage all join against that row - there is no lighter way in.
-    #Only personas flagged has_body = 1 get one, so the whisper-only cast stays cheap. Turning
-    #this off leaves the characters in the database, it just stops placing them in maps.
-    USE_BOT_BODIES: true
-
-    #Bots answering ordinary map chat, not just whispers. Range is in map units; roughly a screen
-    #and a half at 800. Only the nearest bot answers, so a crowded town does not produce a chorus.
-    BOT_CHAT_IN_MAP: true
-    BOT_CHAT_MAP_RANGE: 800
-
-    #Whether bots accept party, buddy and guild invitations from you.
-    BOT_ACCEPTS_INVITES: true
-
-    #Whether a bot can be engaged and married, skipping the scripted ceremony logistics.
-    BOT_CAN_MARRY: true
-
-    #Bots fighting. Say "fight" or "help me" to a bot that is with you; "stop" ends it.
-    #Damage is computed server-side and handed to the same map.damageMonster every player attack
-    #ends at, so aggro, drops, experience, death and boss revives all behave identically.
-    #Bots stop attacking anything under damage reflect, and they heal themselves - they are who
-    #you brought with you, not the difficulty.
-    BOT_COMBAT: true
-
-    #Scales bot damage. The curve is level*level/3, so a level 130 bot hits for around 5600 at
-    #1.0. Raise it if they feel like dead weight at bosses; lower it if they trivialise content.
-    BOT_ATTACK_MULTIPLIER: 1.0
-
-    #Damage over Time
-    #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
-    #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path
-    #that awards exp, drops and quest credit - so without it a poisoned mob would sit at 0 HP,
-    #alive and undroppable. With DOT_CAN_KILL on, a lethal tick is routed through the normal
-    #damage path instead, so the kill pays out exactly like a melee kill would.
-    #Applies to every DoT in the game, not just Night Walker's - mage poison mist, Ninja Ambush,
-    #all venoms.
-    DOT_CAN_KILL: true
-    DOT_TICK_INTERVAL: 400              #Milliseconds between poison and Ninja Ambush ticks. Vanilla 1000.
-    VENOM_TICK_INTERVAL: 200            #Same, for venom only. Venom's damage is flat (LUK-scaled)
-                                        #rather than a share of max HP like Poison Bomb, so it needs
-                                        #a faster cadence to stay relevant against big HP pools.
-                                        #IMPORTANT: both values are quantised by the mob status
-                                        #monitor. MobStatusService computes
-                                        #  procLimit = ceil(delay / MOB_STATUS_MONITOR_PROC)
-                                        #and fires once every procLimit monitor ticks, so the real
-                                        #interval is always a multiple of MOB_STATUS_MONITOR_PROC
-                                        #(200ms below). Use multiples of 200: 300 silently behaves as
-                                        #400, 500 as 600. 200 is the fastest possible - one action
-                                        #per monitor tick.
-                                        #Shadow Web keeps its own separate 3500ms cadence.
-
-    #Vanilla poison mist ticks for maxHp / (70 - skillLevel) - a slice of the TARGET's max HP.
-    #That makes it trivial on ordinary monsters and pinned to the 32767 clamp on any boss above
-    #roughly 1.3M HP, so it scales with what you are hitting rather than with your character.
-    #With this on, a tick instead deals the skill's own damage % (220% for a maxed Poison Bomb)
-    #against your max base damage, so the DoT matches the hit that lands the mist.
-    #Affects every poison mist: Poison Bomb, FP Poison Mist and Flame Gear. Magic classes scale
-    #off matk, everyone else off watk. Still capped at 32767 per tick either way.
-    POISON_MIST_DOT_USES_SKILL_DAMAGE: true
-
-    #Vanilla clamps every DoT tick to Short.MAX_VALUE (32767), because the status value is sent
-    #to the client inside APPLY_MONSTER_STATUS as a short and would otherwise arrive wrapped.
-    #That clamp was applied to the damage as well as to the displayed number, so no tick could
-    #ever exceed 32767. The two are now separate: the figure the client renders stays inside
-    #short range, while the damage dealt is uncapped. Consequence: on a tick above 32767 the
-    #purple poison number shown is the clamped one, but the monster takes the full amount.
-    DOT_UNCAPPED_DAMAGE: true
-
-    #Shadow Web's damage over time is 2% of the target's MAX HP every 3.5s, with no clamp of its
-    #own - roughly 42 million per tick on Pink Bean, which trivialises anything with a large HP
-    #pool. Off by default; the web still immobilises, it just deals no damage.
-    SHADOW_WEB_DOT: false
-
-    #Which MonsterStatus values are allowed to land on boss-flagged monsters. Vanilla allows
-    #none at all - one check rejects every status on a boss, which is why poison, venom and
-    #Shadow Web silently do nothing to them. Listing a status here exempts it. Every status
-    #carried by an effect must be listed for that effect to apply, so a mixed effect that also
-    #carries STUN still gets rejected. Leave hard crowd control (STUN, FREEZE, DOOM) off this
-    #list unless you want bosses to stop being bosses. Seal is blocked separately and stays so.
-    BOSS_ALLOWED_STATUSES:
-      - POISON
-      - VENOMOUS_WEAPON
-      - SHADOW_WEB
-      - NINJA_AMBUSH
-
     #Other configuration
     SHUTDOWNHOOK: true
+    SPAWN_BOTS_ON_STARTUP: true         #SoloMapling: auto-populate the world with bots on server startup (no player/relog needed). Set false to disable bot spawning.
 
     #Server Flags
     USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
@@ -406,7 +220,7 @@ server:
     USE_MAXRANGE_ECHO_OF_HERO: true
     USE_MTS: false
     USE_CPQ: true                       #Renders the CPQ available or not.
-    USE_AUTOHIDE_GM: true              #When enabled, GMs are automatically hidden when joining. Thanks to Steven Deblois (steven1152).
+    USE_AUTOHIDE_GM: false              #When enabled, GMs are automatically hidden when joining. Thanks to Steven Deblois (steven1152).
     USE_FIXED_RATIO_HPMP_UPDATE: false   #Enables the HeavenMS-builtin HPMP update based on the current pool to max pool ratio.
     USE_FAMILY_SYSTEM: true
     USE_DUEY: true
@@ -427,7 +241,7 @@ server:
     USE_ENFORCE_ADMIN_ACCOUNT: false    #Forces accounts having GM characters to be treated as a "GM account" by the client (localhost). Some of the GM account perks is the ability to FLY, but unable to TRADE.
     USE_ENFORCE_NOVICE_EXPRATE: false    #Hardsets experience rate 1x for beginners level 10 or under. Ideal for roaming on novice areas without caring too much about losing some stats.
     USE_ENFORCE_HPMP_SWAP: false        #Forces players to reuse stats (via AP Resetting) located on HP/MP pool only inside the HP/MP stats.
-    USE_ENFORCE_MOB_LEVEL_RANGE: true   #Players N levels below the killed mob will gain no experience from defeating it.
+    USE_ENFORCE_MOB_LEVEL_RANGE: false   #Players N levels below the killed mob will gain no experience from defeating it.
     USE_ENFORCE_JOB_LEVEL_RANGE: false  #Caps the player level on the minimum required to advance their current jobs.
     USE_ENFORCE_JOB_SP_RANGE: false     #Caps the player SP level on the total obtainable by their current jobs. After changing jobs, missing SP will be retrieved.
     USE_ENFORCE_ITEM_SUGGESTION: false  #Forces the Owl of Minerva and the Cash Shop to always display the defined item array instead of those featured by the players.
@@ -437,18 +251,13 @@ server:
     USE_ENFORCE_MDOOR_POSITION: false   #Forces mystic door to be spawned near spawnpoints.
     USE_SPAWN_CLEAN_MDOOR: false         #Makes mystic doors to be spawned without deploy animation. This clears disconnecting issues that may happen when trying to cancel doors a couple seconds after deployment.
     USE_SPAWN_RELEVANT_LOOT: true       #Forces to only spawn loots that are collectable by the player or any of their party members.
-    USE_ERASE_PERMIT_ON_OPENSHOP: true  #Forces "shop permit" item to be consumed when player deploy his/her player shop.
+    USE_ERASE_PERMIT_ON_OPENSHOP: false  #Forces "shop permit" item to be consumed when player deploy his/her player shop.
     USE_ERASE_UNTRADEABLE_DROP: true    #Forces flagged untradeable items to disappear when dropped.
     USE_ERASE_PET_ON_EXPIRATION: false  #Forces pets to be removed from inventory when expire time comes, rather than converting it to a doll.
     USE_BUFF_MOST_SIGNIFICANT: true     #When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
     USE_BUFF_EVERLASTING: false         #Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
     USE_MULTIPLE_SAME_EQUIP_DROP: true  #Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
-    #Spawn density normally scales with player count: 0.70 + 0.05 * min(6, players), so a
-    #solo player fills only 75% of a map's spawn points and a full party of 6 fills 100%.
-    #Turning this on always fills every available spawn point regardless of player count,
-    #which is the difference between 75% and 100% density when playing alone.
-    #The map's own spawn point count is the ceiling - going beyond it means editing Map.wz.
-    USE_ENABLE_FULL_RESPAWN: true        #At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
+    USE_ENABLE_FULL_RESPAWN: false       #At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
     USE_ENABLE_CHAT_LOG: false          #Write in-game chat to log
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
@@ -456,19 +265,12 @@ server:
 
     #Events/PQs Configuration
     USE_OLD_GMS_STYLED_PQ_NPCS: true     #Enables PQ NPCs with similar behaviour to old GMS style, that skips info about the PQs and immediately tries to register the party in.
-    #Lets expeditions start with any number of players - the minimum party size becomes 1
-    #instead of 6 for Zakum, Horntail, Pinkbean, Scarga and CWKPQ (3 for Balrog Easy and
-    #Showa, 2 for Ariant). It also unlocks the two gates that need other people:
-    #  - talking to the El Nath chief completes the Zakum prequest (quest 100201), so the
-    #    Dead Mine chain is skipped. No other quest is touched.
-    #  - Horntail accepts the 3 component certificates (4001083/4/5) in place of the
-    #    Certificate of the Dragon Squad, so only the final group step is skipped.
-    USE_ENABLE_SOLO_EXPEDITIONS: true     #Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
+    USE_ENABLE_SOLO_EXPEDITIONS: false    #Enables start expeditions with any number of players. This will also bypass all the Zakum prequest.
     USE_ENABLE_DAILY_EXPEDITIONS: false  #Enables daily entry limitations in expeditions.
     USE_ENABLE_RECALL_EVENT: false        #Enables a disconnected player to reaccess the last event instance they were in before logging out. Recall only works if the event isn't cleared or disposed yet. Suggestion thanks to Alisson (Goukken).
 
     #Announcement Configuration
-    USE_ANNOUNCE_SHOPITEMSOLD: false    #Automatic message sent to owner when an item from the Player Shop or Hired Merchant is sold.
+    USE_ANNOUNCE_SHOPITEMSOLD: true    #Automatic message sent to owner when an item from the Player Shop or Hired Merchant is sold.
     USE_ANNOUNCE_CHANGEJOB: false       #Automatic message sent to acquantainces when changing jobs.
     USE_ANNOUNCE_NX_COUPON_LOOT: false    #Enables or disables the floating text when a player loots a NX card
 
@@ -481,6 +283,10 @@ server:
     #Maker Configuration
     USE_MAKER_PERMISSIVE_ATKUP: false    #Allows players to use attack-based strengthening gems on non-weapon items.
     USE_MAKER_FEE_HEURISTICS: true      #Apply compiled values for stimulants and reagents into the Maker fee calculations (max error revolves around 50k mesos). Set false to use basic constant values instead (results are never higher than requested by the client-side).
+
+    #Custom Configuration
+    USE_ENABLE_CUSTOM_NPC_SCRIPT: false  #Enables usage of custom HeavenMS NPC scripts (Agent E, Coco, etc). Will not disable Abdula (it's actually useful for the gameplay) or quests.
+    USE_STARTER_MERGE: false            #Allows any players to use the Equipment Merge custom mechanic (as opposed to the high-level, Maker lv3 requisites).
 
     #Commands Configuration
     BLOCK_GENERATE_CASH_ITEM: false     #Prevents creation of cash items with the item/drop command.
@@ -652,3 +458,56 @@ server:
     NPCS_SCRIPTABLE:
       #9200000: Talk to Cody # Cody
       9001105: Rescue Gaga!  # Grandpa moon bunny
+
+    # ==========================================================================================
+    # Carried over from the pre-SoloMapling server. These are the gameplay changes made for this
+    # server specifically, kept verbatim through the rebase onto SoloMapling.
+    # ==========================================================================================
+
+    #Pirate Energy Charge stays full instead of draining, so it never has to be rebuilt mid-boss.
+    PERMANENT_ENERGY_CHARGE: true
+
+    #Thief Dark Sight is not broken by attacking, keeping the 1.3x multiplier and the immunity
+    #to boss touch damage permanently.
+    PERMANENT_DARK_SIGHT: true
+
+    #Damage over Time
+    #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1).
+    DOT_CAN_KILL: true
+    DOT_TICK_INTERVAL: 400              #Quantised upward to a multiple of 200 by MobStatusService.
+    VENOM_TICK_INTERVAL: 200            #Venom ticks on its own, faster clock.
+    POISON_MIST_DOT_USES_SKILL_DAMAGE: true   #Poison Bomb ticks for its own damage %, not target max HP.
+    DOT_UNCAPPED_DAMAGE: true           #Removes the Short.MAX_VALUE clamp on displayed DoT ticks.
+    SHADOW_WEB_DOT: false               #Shadow Web's max-HP% tick disabled - it was overwhelming.
+
+    #Statuses bosses accept despite their usual immunity.
+    BOSS_ALLOWED_STATUSES:
+      - POISON
+      - VENOMOUS_WEAPON
+      - SHADOW_WEB
+      - NINJA_AMBUSH
+
+    #Mob skills never cast, by name. Dispel strips buffs; Seduce removes control.
+    DISABLED_MOB_SKILLS:
+      - DISPEL
+      - SEDUCE
+
+    #Command Access
+    #Floor applied to every character's GM level as it loads. Tier 1 "Donator" grants @goto,
+    #@buffme, @whodrops and @whatdropsfrom, and is NOT treated as a GM (isGM() is level > 1).
+    MINIMUM_GM_LEVEL: 1
+
+    #Global buffs, refreshed automatically so solo play is not gated on a party healer.
+    USE_GLOBAL_BUFFS: true
+    GLOBAL_BUFF_INTERVAL: 3             #Minutes between refreshes.
+    GLOBAL_BUFF_SKILLS:
+      # GM versions - stronger than the player ones and valid for any class. 15 min each.
+      - 9101008                         #Hyper Body    +60% max HP/MP
+      - 9101003                         #Bless         +20 att/matk, +100 def/mdef/acc/avoid
+      - 9101002                         #Holy Symbol   +50% exp
+      - 9101001                         #Haste         +40 speed, +20 jump
+      # Stand-ins for the Thunder Breaker 4th job skills. ORIGINAL ids, so the client already
+      # knows them and the buff icons render without a client-side .wz edit.
+      - 1121002                         #Power Stance  90% knockback resist.  5 min
+      - 3121002                         #Sharp Eyes    +crit rate and damage. 5 min
+      - 5121000                         #Maple Warrior +15% all stats.       15 min

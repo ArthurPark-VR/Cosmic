@@ -70,26 +70,6 @@ public class ServerConfig {
     //Thief Dark Sight
     public boolean PERMANENT_DARK_SIGHT;
 
-    //Bot LLM dialogue
-    public boolean USE_BOT_LLM;
-    public String BOT_LLM_ENDPOINT;
-    public String BOT_LLM_MODEL;
-    public int BOT_LLM_TIMEOUT_MS;
-    public int BOT_LLM_MAX_TOKENS;
-    public int BOT_LLM_MAX_REPLY_CHARS;
-    public int BOT_PROGRESS_HOURS_PER_LEVEL;
-    public int BOT_PROGRESS_TALKS_PER_LEVEL;
-    public int BOT_PROGRESS_MAX_LEVEL;
-
-    //Bot bodies - characters standing in the world
-    public boolean USE_BOT_BODIES;
-    public boolean BOT_CHAT_IN_MAP;
-    public int BOT_CHAT_MAP_RANGE;
-    public boolean BOT_ACCEPTS_INVITES;
-    public boolean BOT_CAN_MARRY;
-    public boolean BOT_COMBAT;
-    public double BOT_ATTACK_MULTIPLIER;
-
     //Damage over Time
     public boolean DOT_CAN_KILL;
     public int DOT_TICK_INTERVAL;
@@ -102,6 +82,9 @@ public class ServerConfig {
 
     //Other configuration
     public boolean SHUTDOWNHOOK;
+
+    //SoloMapling: spawn the bot world automatically on server startup (cold boot).
+    public boolean SPAWN_BOTS_ON_STARTUP;
 
     //Server Flags
     public boolean USE_CUSTOM_KEYSET;
@@ -181,6 +164,10 @@ public class ServerConfig {
     //Maker Configuration
     public boolean USE_MAKER_PERMISSIVE_ATKUP;
     public boolean USE_MAKER_FEE_HEURISTICS;
+
+    //Custom Configuration
+    public boolean USE_ENABLE_CUSTOM_NPC_SCRIPT;
+    public boolean USE_STARTER_MERGE;
 
     //Commands Configuration
     public boolean BLOCK_GENERATE_CASH_ITEM;

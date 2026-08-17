@@ -60,6 +60,7 @@ import scripting.event.EventInstanceManager;
 import server.GlobalBuffs;
 import server.life.MobSkill;
 import service.NoteService;
+import soloMapling.ArtificialPlayer.BotHelpers;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 import tools.Pair;

@@ -149,7 +149,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
-    private boolean bot = false;
 
     public enum Type {
         LOGIN,
@@ -177,30 +176,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public static Client createMock() {
         return new Client(null, -1, null, null, -123, -123);
-    }
-
-    /**
-     * A client for a character that exists in the world but has nobody connected to it - the bot
-     * cast. Unlike {@link #createMock()} it carries a real world and channel, because a character
-     * standing in a map is reached through {@link #getChannelServer()} by map scripts, mini
-     * dungeons and party code, all of which would otherwise dereference null.
-     *
-     * <p>There is no io channel, so {@link #sendPacket} silently discards. That is the whole trick:
-     * every existing system can treat a bot as an ordinary player and simply talk into the void.
-     */
-    public static Client createBotClient(int world, int channel) {
-        Client c = new Client(Type.CHANNEL, -1, "bot", null, world, channel);
-        c.bot = true;
-        c.loggedIn = true;
-        return c;
-    }
-
-    /**
-     * True when nobody is connected to this client. Callers that need a real connection - packet
-     * decoding, disconnect handling, anything measuring latency - must check this.
-     */
-    public boolean isBot() {
-        return bot;
     }
 
     @Override
@@ -307,15 +282,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void closeSession() {
-        if (ioChannel != null) {
-            ioChannel.close();
-        }
+        ioChannel.close();
     }
 
     public void disconnectSession() {
-        if (ioChannel != null) {
-            ioChannel.disconnect();
-        }
+        ioChannel.disconnect();
     }
 
     public Hwid getHwid() {
@@ -1471,6 +1442,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public synchronized void announceBossHpBar(Monster mm, final int mobHash, Packet packet) {
+        // The shared headless bot client has no bound player; it's on the map as a
+        // character (so it's hit by the boss-HP broadcast) but has no HP bar to track.
+        if (player == null) {
+            return;
+        }
         long timeNow = System.currentTimeMillis();
         int targetHash = player.getTargetHpBarHash();
 
@@ -1492,24 +1468,9 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void sendPacket(Packet packet) {
-        final io.netty.channel.Channel out = ioChannel;
-        if (out == null) {
-            // A bot character has no connection to write to, and this is the expected path for
-            // one. Discarding here rather than making every caller ask is deliberate:
-            // chr.sendPacket is reached from hundreds of places across map entry, buffs, damage
-            // and party updates, and a guard at each one would be missed exactly once and then
-            // NPE in production. It also hardens the pre-existing createMock() callers.
-            if (!bot) {
-                // Not expected for anyone else. Previously this threw, which was at least loud;
-                // dropping silently for a real client would hide a genuine bug, so it is said out
-                // loud instead.
-                log.warn("Dropped a packet for a client with no channel (account {})", accountName);
-            }
-            return;
-        }
         announcerLock.lock();
         try {
-            out.writeAndFlush(packet);
+            ioChannel.writeAndFlush(packet);
         } finally {
             announcerLock.unlock();
         }

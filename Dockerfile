@@ -39,6 +39,12 @@ COPY --from=jar /opt/cosmic/target/Cosmic.jar ./Server.jar
 COPY scripts ./scripts/
 # Config is read on server startup, so you can mount over it for quicker redeploy.
 COPY config.yaml ./
+
+# The bot system reads twelve data files at runtime by SOURCE path, not from the jar:
+# the 440 recorded movement streams that make bots arrive correctly, the dialogue packs, the
+# cosmetic and equip pools, the town pins. Without them the bots cannot spawn or move at all.
+# Copied to the same relative path the code asks for, so no code change is needed.
+COPY src/main/java/soloMapling ./src/main/java/soloMapling
 # Default exposure, although not required if using docker compose.
 # This exposes the login server, and channels.
 # Format for channels: WWCC, where WW is 75 plus the world number and CC is 75 plus the channel number (both zero indexed).

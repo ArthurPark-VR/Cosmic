@@ -117,13 +117,7 @@ public final class GuildOperationHandler extends AbstractPacketHandler {
                 if (mgr != null) {
                     c.sendPacket(mgr.getPacket(targetName));
                 } else {
-                    // null means the invitation went out. If it went to a bot, nobody is there to
-                    // accept it, so the bot answers for itself.
-                    Character invitee = c.getChannelServer().getPlayerStorage().getCharacterByName(targetName);
-                    if (invitee != null && invitee.isBot()) {
-                        server.bot.BotSocial.onGuildInvite(invitee, mc.getGuildId());
-                    }
-                }
+                } // already sent invitation, do nothing
 
                 break;
             case 0x06:
