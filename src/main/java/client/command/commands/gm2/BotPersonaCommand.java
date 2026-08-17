@@ -22,7 +22,8 @@ public class BotPersonaCommand extends Command {
             "boastful about your gear", "quiet, answers in as few words as possible",
     };
     private static final String[] HAUNTS = {
-            "Henesys", "Ludibrium", "Kerning City", "Orbis", "Leafre", "El Nido", "Ellinia",
+            "Henesys", "Ludibrium", "Kerning City", "Orbis", "Leafre", "Ellinia",
+            "Perion", "Sleepywood", "El Nath", "Lith Harbor", "Nautilus", "Aquarium",
     };
     private static final String[] FOODS = {
             "fried chicken", "tteokbokki", "apple pie", "instant ramen", "shaved ice", "orange juice",
