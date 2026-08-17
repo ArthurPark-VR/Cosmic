@@ -151,6 +151,14 @@ public final class BotWorld {
 
         channel.addPlayer(chr);
         world.addPlayer(chr);
+
+        // Out of the party search queue before entering the world. The characters table defaults
+        // partySearch to 1, so a bot would otherwise be offered to real players looking for a
+        // party - and it would never accept, because the invite arrives as a packet nobody
+        // receives. The invite would then occupy that player's one pending slot until it expired.
+        if (chr.isRecvPartySearchInviteEnabled()) {
+            chr.toggleRecvPartySearchInvite();
+        }
         chr.setEnteredChannelWorld();
 
         MapleMap map = chr.getMap();

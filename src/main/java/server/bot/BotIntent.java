@@ -38,6 +38,13 @@ public enum BotIntent {
             "stand down", "leave it", "stop it",
     };
 
+    /**
+     * Single words that are an instruction on their own. Matched on word boundaries rather than
+     * as substrings, so "stop" is heard but "I stopped by the shop" is not.
+     */
+    private static final String[] STOP_WORDS = {"stop", "wait", "halt", "enough", "stay"};
+    private static final String[] FIGHT_WORDS = {"fight", "attack", "kill"};
+
     public static BotIntent of(String message) {
         if (message == null || message.isBlank()) {
             return NONE;
@@ -51,6 +58,9 @@ public enum BotIntent {
                 return STOP;
             }
         }
+        if (containsWord(lower, STOP_WORDS)) {
+            return STOP;
+        }
         // Fight before follow: "help me fight" contains neither follow phrase, but "let's go"
         // said mid-fight should not silently downgrade an attack order to a walk.
         for (String phrase : FIGHT_PHRASES) {
@@ -58,11 +68,30 @@ public enum BotIntent {
                 return FIGHT;
             }
         }
+        if (containsWord(lower, FIGHT_WORDS)) {
+            return FIGHT;
+        }
         for (String phrase : FOLLOW_PHRASES) {
             if (lower.contains(phrase)) {
                 return FOLLOW;
             }
         }
         return NONE;
+    }
+
+    private static boolean containsWord(String lower, String[] words) {
+        for (String word : words) {
+            int at = lower.indexOf(word);
+            while (at >= 0) {
+                boolean startsClean = at == 0 || !Character.isLetterOrDigit(lower.charAt(at - 1));
+                int end = at + word.length();
+                boolean endsClean = end == lower.length() || !Character.isLetterOrDigit(lower.charAt(end));
+                if (startsClean && endsClean) {
+                    return true;
+                }
+                at = lower.indexOf(word, at + 1);
+            }
+        }
+        return false;
     }
 }

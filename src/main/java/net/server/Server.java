@@ -947,6 +947,7 @@ public class Server {
         // channel, and before the port opens, so the cast is already standing there for the first
         // player who connects rather than popping in underneath them.
         server.bot.BotWorld.spawnAll();
+        server.bot.BotSelfTest.runIfRequested();
 
         online = true;
         Duration initDuration = Duration.between(beforeInit, Instant.now());
