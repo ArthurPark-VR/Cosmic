@@ -96,8 +96,17 @@ public class BotDialogue {
                     if (persona.isEmpty()) {
                         return null;
                     }
+                    // Read familiarity BEFORE recording this exchange, so the very first message
+                    // is answered as a stranger rather than as someone already acquainted.
+                    Familiarity familiarity = Familiarity.of(interactionCount(botName, speakerName));
+                    String progressNote = progressNote(botName);
+
                     remember(botName, speakerName, channel, "them", message);
-                    return new Prepared(persona.get(), buildPrompt(botName, speakerName, message));
+                    touchRelationship(botName, speakerName);
+
+                    return new Prepared(
+                            persona.get().toSystemPrompt(familiarity, speakerName, progressNote),
+                            buildPrompt(botName, speakerName, message));
                 })
                 .thenCompose(prepared -> {
                     if (prepared == null) {
@@ -106,7 +115,7 @@ public class BotDialogue {
                     // Bounded by name so one bot cannot be driven to run several generations at
                     // once; the hash is stable across restarts, unlike an object identity.
                     return LlmClient.getInstance()
-                            .chat(botName.hashCode(), prepared.persona().toSystemPrompt(), prepared.prompt())
+                            .chat(botName.hashCode(), prepared.systemPrompt(), prepared.prompt())
                             .thenApply(reply -> {
                                 reply.ifPresent(text -> remember(botName, speakerName, channel, "bot", text));
                                 return reply;
@@ -119,7 +128,75 @@ public class BotDialogue {
                 });
     }
 
-    private record Prepared(BotPersona persona, String prompt) {
+    private record Prepared(String systemPrompt, String prompt) {
+    }
+
+    /**
+     * How many times this bot has spoken with this person. Read before the current exchange is
+     * recorded, so a first contact genuinely reads as zero.
+     */
+    public static int interactionCount(String botName, String playerName) {
+        final String sql = "SELECT interactions FROM bot_relationship WHERE bot_name = ? AND player_name = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, botName);
+            ps.setString(2, playerName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            log.warn("Failed reading relationship {}/{}", botName, playerName, e);
+            return 0;
+        }
+    }
+
+    private static void touchRelationship(String botName, String playerName) {
+        final String sql = """
+                INSERT INTO bot_relationship (bot_name, player_name, interactions)
+                VALUES (?, ?, 1)
+                ON DUPLICATE KEY UPDATE interactions = interactions + 1""";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, botName);
+            ps.setString(2, playerName);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warn("Failed updating relationship {}/{}", botName, playerName, e);
+        }
+    }
+
+    /**
+     * Level-stage guidance for characters that have a bot_progress row. Empty for everyone else,
+     * whose voice is meant to stay constant.
+     */
+    static String progressNote(String botName) {
+        Integer level = levelOf(botName);
+        return level == null ? "" : BotProgress.stageNote(level);
+    }
+
+    /**
+     * Current derived level, or null if this character does not progress.
+     */
+    public static Integer levelOf(String botName) {
+        final String sql = """
+                SELECT p.start_level,
+                       TIMESTAMPDIFF(HOUR, p.started_at, NOW()) AS hours,
+                       COALESCE((SELECT SUM(r.interactions) FROM bot_relationship r
+                                 WHERE r.bot_name = p.bot_name), 0) AS talks
+                FROM bot_progress p WHERE p.bot_name = ?""";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, botName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return BotProgress.levelFor(rs.getInt("start_level"), rs.getLong("hours"), rs.getInt("talks"));
+            }
+        } catch (SQLException e) {
+            log.warn("Failed reading progress for '{}'", botName, e);
+            return null;
+        }
     }
 
     private static String buildPrompt(String botName, String speakerName, String message) {

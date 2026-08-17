@@ -23,7 +23,18 @@ public record BotPersona(
      * that cannot be sent as a single chat line.
      */
     public String toSystemPrompt() {
-        StringBuilder prompt = new StringBuilder(512);
+        return toSystemPrompt(Familiarity.CLOSE, "", "");
+    }
+
+    /**
+     * @param familiarity  how well this bot knows the person speaking - governs warmth and
+     *                     whether it may use their name at all
+     * @param speakerName  who is speaking
+     * @param progressNote level-stage guidance for characters whose voice changes as they grow;
+     *                     empty for everyone else
+     */
+    public String toSystemPrompt(Familiarity familiarity, String speakerName, String progressNote) {
+        StringBuilder prompt = new StringBuilder(768);
         prompt.append("You are ").append(name)
                 .append(", a player character in MapleStory. You are chatting in game.");
 
@@ -48,6 +59,12 @@ public record BotPersona(
         if (!speechStyle.isBlank()) {
             prompt.append(" Speak like this: ").append(speechStyle).append('.');
         }
+
+        if (progressNote != null && !progressNote.isBlank()) {
+            prompt.append(' ').append(progressNote);
+        }
+        // Last, so it is the freshest instruction and outweighs the persona's own warmth.
+        prompt.append(' ').append(familiarity.directive(speakerName));
 
         prompt.append(" Reply with one or two short sentences, as a player would type in chat.")
                 .append(" Do not use emotes, asterisks or narration.")

@@ -290,6 +290,17 @@ server:
     BOT_LLM_MAX_REPLY_CHARS: 300        #Hard cap after generation, truncated at a sentence end
                                         #where possible. Chat is a single line.
 
+    #Bot progression (currently Wren, the Aran, who starts at level 10)
+    #Level is DERIVED from elapsed real time plus conversations held, not stored and ticked, so
+    #there is no scheduler, nothing drifts, and time passes correctly while the server is off.
+    #At 8 hours per level that is 3 levels/day, so level 10 -> 70 lands around three weeks.
+    #Talking to them accelerates it, so your involvement visibly matters.
+    #Wren's voice is written to change with the number: hesitant early, steady in the middle,
+    #economical and certain late. It is the one persona meant to be inconsistent over time.
+    BOT_PROGRESS_HOURS_PER_LEVEL: 8     #Real hours per level from the passage of time alone.
+    BOT_PROGRESS_TALKS_PER_LEVEL: 15    #Extra level per this many conversations.
+    BOT_PROGRESS_MAX_LEVEL: 200
+
     #Damage over Time
     #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
     #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path

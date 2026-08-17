@@ -77,6 +77,9 @@ public class ServerConfig {
     public int BOT_LLM_TIMEOUT_MS;
     public int BOT_LLM_MAX_TOKENS;
     public int BOT_LLM_MAX_REPLY_CHARS;
+    public int BOT_PROGRESS_HOURS_PER_LEVEL;
+    public int BOT_PROGRESS_TALKS_PER_LEVEL;
+    public int BOT_PROGRESS_MAX_LEVEL;
 
     //Damage over Time
     public boolean DOT_CAN_KILL;

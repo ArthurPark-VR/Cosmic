@@ -1,10 +1,14 @@
 /*
-    Seeds a bot persona so it can be whispered.
+    Seeds a bot persona so it can be whispered, and reads back one that already exists.
 
     Administrative setup, not the interaction itself - once a persona exists you talk to it by
     whispering the name, exactly as you would a real player. Generates a coherent randomised
     identity rather than asking for one, because typing a paragraph into a chat box is miserable
     and the point is to get to a conversation quickly. Edit bot_persona directly for finer control.
+
+    Naming an existing persona reads it back rather than rerolling it. The hand-written cast lives
+    in the same table as rolled ones, and a single mistyped command would otherwise replace a
+    written character with random filler and no warning. Overwriting needs -force.
 */
 package client.command.commands.gm2;
 
@@ -12,8 +16,12 @@ import client.Character;
 import client.Client;
 import client.command.Command;
 import server.bot.BotDialogue;
+import server.bot.BotPersona;
+import server.bot.Familiarity;
 import server.bot.LlmClient;
 import tools.Randomizer;
+
+import java.util.Optional;
 
 public class BotPersonaCommand extends Command {
     private static final String[] TEMPERAMENTS = {
@@ -44,7 +52,7 @@ public class BotPersonaCommand extends Command {
     };
 
     {
-        setDescription("Create a bot persona you can whisper. Usage: @botpersona <name>");
+        setDescription("Create or inspect a bot persona. Usage: @botpersona <name> [-force]");
     }
 
     @Override
@@ -52,13 +60,20 @@ public class BotPersonaCommand extends Command {
         Character player = c.getPlayer();
 
         if (params.length == 0) {
-            player.yellowMessage("Syntax: @botpersona <name>   - then just whisper that name.");
+            player.yellowMessage("Syntax: @botpersona <name> [-force]   - then just whisper that name.");
             return;
         }
 
         String name = params[0];
         if (name.length() > 13) {
             player.yellowMessage("Names are at most 13 characters.");
+            return;
+        }
+
+        boolean force = params.length > 1 && "-force".equalsIgnoreCase(params[1]);
+        Optional<BotPersona> existing = BotDialogue.loadPersona(name);
+        if (existing.isPresent() && !force) {
+            describe(player, existing.get());
             return;
         }
 
@@ -86,6 +101,36 @@ public class BotPersonaCommand extends Command {
         if (!LlmClient.isEnabled()) {
             player.yellowMessage("Note: USE_BOT_LLM is false, so they will only give canned replies.");
         }
+    }
+
+    /**
+     * Readout for a persona that already exists. Shows the two things that are not visible from
+     * the character's own replies: how well it currently knows you, and - for the ones that grow -
+     * what level it has reached. The bots are never told these numbers themselves.
+     */
+    private static void describe(Character player, BotPersona persona) {
+        int met = BotDialogue.interactionCount(persona.name(), player.getName());
+        Familiarity familiarity = Familiarity.of(met);
+
+        player.dropMessage(6, persona.name() + " already exists - " + persona.temperament() + ".");
+
+        Integer level = BotDialogue.levelOf(persona.name());
+        if (level != null) {
+            player.dropMessage(5, "Level " + level + " (grows on its own over time).");
+        }
+
+        int next = familiarity.nextThreshold();
+        String standing = familiarity.name().toLowerCase() + ", " + met
+                + (met == 1 ? " exchange" : " exchanges") + " with you";
+        if (next > 0) {
+            standing += " (" + (next - met) + " more to warm up)";
+        }
+        player.dropMessage(5, "Standing: " + standing + ".");
+
+        if (persona.goalText() != null && !persona.goalText().isBlank()) {
+            player.dropMessage(5, "Working towards: " + persona.goalText() + ".");
+        }
+        player.yellowMessage("Whisper them to talk. Use -force to overwrite with a random persona.");
     }
 
     private static String pick(String[] pool) {
