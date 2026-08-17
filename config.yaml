@@ -269,6 +269,27 @@ server:
     #behaviour, and bosses do not always respect it.
     PERMANENT_DARK_SIGHT: true
 
+    #Bot LLM dialogue
+    #Local model used to give bots free-form personality. Runs against the `ollama` service in
+    #docker-compose.yml, so it costs nothing beyond the hardware you already own.
+    #This is the interaction half of a hybrid design: ambient wandering chatter stays canned and
+    #rule-based (instant, free), and the model is called ONLY when someone actually talks to a
+    #bot or a bot's goal changes. Never call it on a tick.
+    #The server tolerates this being unreachable - every failure path falls back to canned lines,
+    #which is why the ollama service is deliberately absent from maplestory's depends_on.
+    USE_BOT_LLM: false                  #Off until you have pulled a model, see below.
+    BOT_LLM_ENDPOINT: "http://ollama:11434"   #Container-network name. Use http://localhost:11434
+                                        #instead if you run the server outside Docker.
+    BOT_LLM_MODEL: "llama3.1:8b"        #Pull it once with:
+                                        #  docker compose exec ollama ollama pull llama3.1:8b
+                                        #~5GB at Q4, fits 8GB VRAM, 40+ tok/s. Qwen3 8B also fine.
+    BOT_LLM_TIMEOUT_MS: 8000            #Give up and use a canned line past this. CPU-only
+                                        #inference is slower; raise it if replies get dropped.
+    BOT_LLM_MAX_TOKENS: 120             #Generation cap. A bot that monologues cannot be sent as
+                                        #chat anyway, and a tighter cap means faster replies.
+    BOT_LLM_MAX_REPLY_CHARS: 300        #Hard cap after generation, truncated at a sentence end
+                                        #where possible. Chat is a single line.
+
     #Damage over Time
     #Vanilla DoT can never land a killing blow: the tick clamps itself to (currentHp - 1). That
     #clamp exists because the tick calls Monster.applyDamage directly, bypassing the only path

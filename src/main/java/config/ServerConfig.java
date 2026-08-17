@@ -70,6 +70,14 @@ public class ServerConfig {
     //Thief Dark Sight
     public boolean PERMANENT_DARK_SIGHT;
 
+    //Bot LLM dialogue
+    public boolean USE_BOT_LLM;
+    public String BOT_LLM_ENDPOINT;
+    public String BOT_LLM_MODEL;
+    public int BOT_LLM_TIMEOUT_MS;
+    public int BOT_LLM_MAX_TOKENS;
+    public int BOT_LLM_MAX_REPLY_CHARS;
+
     //Damage over Time
     public boolean DOT_CAN_KILL;
     public int DOT_TICK_INTERVAL;

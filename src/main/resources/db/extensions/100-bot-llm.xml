@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Lives under db/extensions rather than db/changelog-tables.xml on purpose: changelog-root
+        picks this directory up via includeAll, so additive changes here do not collide when
+        pulling upstream Cosmic or merging a bot framework.
+    -->
+    <changeSet id="bot-llm-1" author="cosmic-local">
+        <sqlFile path="db/extensions/100-bot-llm.sql"/>
+    </changeSet>
+
+</databaseChangeLog>

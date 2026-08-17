@@ -26,6 +26,28 @@ services:
     environment:
       DB_HOST: "db" ## Remember if this is present it will OVERRIDE the host in the config.yaml, if you put here anything other than db, you'll need to change the config.yaml jdbc string to port 3307, and not port 3306
 
+  ollama:
+    # Local LLM used for bot dialogue. Deliberately NOT in maplestory's depends_on:
+    # the server must boot and run normally when this is down or absent, falling back
+    # to canned lines. Treat it as optional infrastructure, never a hard dependency.
+    image: ollama/ollama
+    volumes:
+      # Downloaded models live here so they survive `docker compose down`.
+      - ./ollama:/root/.ollama
+    ports:
+      # Loopback-only, like everything else. Lets you curl it or run `ollama` commands
+      # from the host: docker compose exec ollama ollama pull llama3.1:8b
+      - "127.0.0.1:11434:11434"
+    # If you have an NVIDIA GPU and the container toolkit installed, uncomment for a
+    # large speedup. CPU-only works fine for short in-character replies, just slower.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
   db:
     image: mysql:8.4.0
     environment:
