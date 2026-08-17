@@ -53,6 +53,7 @@ public final class BotSelfTest {
             testPartyJoin();
             testMarriageGateAndMarriage();
             testIntentPlumbing();
+            testScheduledTasks();
         } catch (Throwable t) {
             log.error("SELFTEST harness itself blew up", t);
             failed++;
@@ -278,6 +279,31 @@ public final class BotSelfTest {
 
         BotChat.applyIntent(bot, leader, "that killer bee was awful");
         check("'killer' is not an attack order", !BotCombat.isFighting(bot.getName()), "idle");
+    }
+
+    /**
+     * Runs the timed background tasks by hand.
+     *
+     * <p>These are the tasks a boot test never reaches. The ranking pass fires hourly and the
+     * autosaver on its own interval, so a two-minute verification run proves nothing about either
+     * - which is exactly how a bot account with a null lastlogin reached a live server and threw
+     * a NullPointerException on the hour, aborting the ranking update for every real character
+     * too. Driving them directly costs a second and closes that gap.
+     */
+    private static void testScheduledTasks() {
+        try {
+            new net.server.task.RankingLoginTask().run();
+            check("ranking pass survives the bot account", true, "no exception");
+        } catch (Exception e) {
+            check("ranking pass survives the bot account", false, e.toString());
+        }
+
+        try {
+            new net.server.task.CharacterAutosaverTask(Server.getInstance().getWorld(0)).run();
+            check("autosave survives bot characters", true, "no exception");
+        } catch (Exception e) {
+            check("autosave survives bot characters", false, e.toString());
+        }
     }
 
     private static void setInteractions(String botName, String playerName, int count) {
