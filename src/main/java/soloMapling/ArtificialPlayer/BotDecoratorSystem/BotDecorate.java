@@ -12,6 +12,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class BotDecorate {
 
+    /** TEMPORARY: bounds the look diagnostic above to the first few bots. */
+    private static final java.util.concurrent.atomic.AtomicInteger LOOK_SAMPLES =
+            new java.util.concurrent.atomic.AtomicInteger();
+
+
     /**
      * Fraction of bots that get the full class-aware decoration pass.
      * The rest keep only their QuickEquip generic/classless outfit so the
@@ -330,6 +335,24 @@ public class BotDecorate {
                     || ThreadLocalRandom.current().nextDouble() < FULL_DECORATION_RATE) {
                 BotDecorationQueue.addBot("default", bot.getId());
             }
+        }
+
+        // TEMPORARY diagnostic: log what the first few bots actually end up wearing, so
+        // "they all look the same" can be answered from evidence rather than inspection.
+        // Remove once the cause is known.
+        if (LOOK_SAMPLES.getAndIncrement() < 6) {
+            StringBuilder worn = new StringBuilder();
+            var eq = bot.getInventory(client.inventory.InventoryType.EQUIPPED);
+            for (short slot : new short[]{-1, -5, -6, -7, -11, -101, -104, -105, -106, -107, -111}) {
+                var it = eq.getItem(slot);
+                if (it != null) {
+                    worn.append(slot).append('=').append(it.getItemId()).append(' ');
+                }
+            }
+            System.out.println("[BotLookSample] " + bot.getName() + " job=" + bot.getJob()
+                    + " lvl=" + bot.getLevel() + " tier=" + bot.getTier()
+                    + " hair=" + bot.getHair() + " face=" + bot.getFace()
+                    + " | " + (worn.length() == 0 ? "NOTHING EQUIPPED" : worn.toString().trim()));
         }
 
         // NX cosmetic layer - runs on every bot regardless of which equip path
