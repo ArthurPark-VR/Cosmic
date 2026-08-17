@@ -149,6 +149,14 @@ public final class BotWorld {
         }
         botClient.setPlayer(chr);
 
+        // Applied on every spawn rather than only at creation. The cast already existed by the
+        // time it had faces worth having, and a look that can only be set once is a look that can
+        // never be corrected.
+        BotLook.Look look = BotLook.forBot(body.name(), body.gender(), body.hair(), body.face());
+        if (BotLook.apply(chr, look, chr.getJob())) {
+            chr.saveCharToDB(false);
+        }
+
         channel.addPlayer(chr);
         world.addPlayer(chr);
 
@@ -166,6 +174,15 @@ public final class BotWorld {
             log.warn("Bot bodies: '{}' has no map, leaving it unplaced", body.name());
             return false;
         }
+
+        // Before addPlayer, because addPlayer is what broadcasts the spawn - set the position
+        // afterwards and every client in the map has already drawn the bot in the wrong place.
+        // loadCharFromDB leaves a character at its portal, which hangs in the air above the
+        // floor; a real client falls that last stretch and reports where it landed, which is a
+        // step a character with nobody connected to it never takes.
+        chr.setPosition(BotMovement.onGround(map, chr.getPosition()));
+        chr.setStance(0);
+
         map.addPlayer(chr);
 
         live.put(body.name().toLowerCase(), chr);

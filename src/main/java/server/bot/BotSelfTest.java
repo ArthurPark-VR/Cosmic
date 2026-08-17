@@ -54,6 +54,8 @@ public final class BotSelfTest {
             testMarriageGateAndMarriage();
             testIntentPlumbing();
             testScheduledTasks();
+            testBotsAreStandingOnGround();
+            testLooksAreDistinct();
         } catch (Throwable t) {
             log.error("SELFTEST harness itself blew up", t);
             failed++;
@@ -279,6 +281,82 @@ public final class BotSelfTest {
 
         BotChat.applyIntent(bot, leader, "that killer bee was awful");
         check("'killer' is not an attack order", !BotCombat.isFighting(bot.getName()), "idle");
+    }
+
+    /**
+     * Every bot must be standing on a foothold, not hanging above one.
+     *
+     * <p>This is the check that should have existed from the start. The evidence was already in
+     * this harness's own output - a bot spawned at y=-67 and the first ground-snapped step put it
+     * at y=30 - and it went unread until someone logged in and saw the whole cast floating in the
+     * air. A number printed is not a number checked.
+     */
+    private static void testBotsAreStandingOnGround() {
+        int floating = 0;
+        String worst = "";
+        int worstGap = 0;
+
+        for (Character bot : BotWorld.all()) {
+            MapleMap map = bot.getMap();
+            if (map == null) {
+                continue;
+            }
+            Point at = bot.getPosition();
+            Point ground = BotMovement.onGround(map, at);
+            int gap = Math.abs(ground.y - at.y);
+            if (gap > 8) {
+                floating++;
+                if (gap > worstGap) {
+                    worstGap = gap;
+                    worst = bot.getName() + " at y=" + at.y + ", ground y=" + ground.y;
+                }
+            }
+        }
+        check("no bot is floating", floating == 0,
+                floating == 0 ? BotWorld.all().size() + " bots all grounded" : floating + " floating, worst: " + worst);
+    }
+
+    /**
+     * The cast should not all look the same. Checks the five written characters are individually
+     * distinct and that the derived looks actually vary.
+     */
+    private static void testLooksAreDistinct() {
+        java.util.Set<String> looks = new java.util.HashSet<>();
+        java.util.Set<Integer> hairs = new java.util.HashSet<>();
+        java.util.Set<Integer> faces = new java.util.HashSet<>();
+
+        for (Character bot : BotWorld.all()) {
+            var eq = bot.getInventory(client.inventory.InventoryType.EQUIPPED);
+            // The whole outfit, because "they all look the same" is about the silhouette, not
+            // just the head - two bots may share a face and still be told apart at a glance.
+            looks.add(bot.getHair() + "/" + bot.getFace()
+                    + "/" + itemIn(eq, (short) -5) + "/" + itemIn(eq, (short) -6)
+                    + "/" + itemIn(eq, (short) -7));
+            hairs.add(bot.getHair());
+            faces.add(bot.getFace());
+        }
+        int total = BotWorld.all().size();
+        check("hair varies across the cast", hairs.size() >= total / 2, hairs.size() + " distinct hairstyles across " + total);
+        check("faces vary across the cast", faces.size() >= total / 2, faces.size() + " distinct faces across " + total);
+        check("no two bots look alike", looks.size() == total, looks.size() + "/" + total + " unique full looks");
+
+        for (String name : new String[]{"Cassiel", "Rhys", "Seraphine", "Elowen", "Wren"}) {
+            Character bot = BotWorld.get(name);
+            if (bot == null) {
+                check("look: " + name + " present", false, "missing");
+                continue;
+            }
+            var equipped = bot.getInventory(client.inventory.InventoryType.EQUIPPED);
+            boolean dressed = equipped.getItem((short) -5) != null && equipped.getItem((short) -7) != null;
+            check("look: " + name + " is dressed", dressed,
+                    "hair=" + bot.getHair() + " face=" + bot.getFace()
+                            + " top=" + (equipped.getItem((short) -5) == null ? "none" : equipped.getItem((short) -5).getItemId()));
+        }
+    }
+
+    private static int itemIn(client.inventory.Inventory inv, short slot) {
+        var item = inv.getItem(slot);
+        return item == null ? 0 : item.getItemId();
     }
 
     /**

@@ -201,6 +201,20 @@ public final class BotMovement {
                 false);
     }
 
+    /**
+     * Snaps a point down onto the ground below it, returning the original point when there is
+     * nothing underneath.
+     *
+     * <p>Public because spawning needs it as much as walking does. A portal's position sits above
+     * the floor - a real client falls the last stretch itself and reports where it landed, which
+     * is a step a character with no client never takes. Placed at the raw portal position a bot
+     * simply hangs in the air forever.
+     */
+    public static Point onGround(MapleMap map, Point at) {
+        Point ground = groundAt(map, at);
+        return ground != null ? ground : at;
+    }
+
     /** Snaps a point down onto the ground below it, or null when there is nothing under it. */
     private static Point groundAt(MapleMap map, Point at) {
         try {

@@ -131,7 +131,7 @@ public final class BotBodyFactory {
         addEquip(equipped, weaponFor(job), SLOT_WEAPON);
     }
 
-    private static int weaponFor(Job job) {
+    static int weaponFor(Job job) {
         return switch (job.getId() / 100) {
             case 2, 12 -> 1382000;   // staff
             case 3, 13 -> 1452000;   // bow
