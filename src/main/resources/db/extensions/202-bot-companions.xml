@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        The handful of bots a player has adopted as permanent companions.
+
+        Ordinary bots are in-memory only: they are cloned from the fmbot template at boot, handed a
+        name off a shuffled pool, and given a character id from a counter. Nothing about them
+        survives a restart, and that is the right trade for three thousand pieces of scenery.
+
+        It is the wrong trade for the five or ten a player actually knows by name. A guild that
+        empties every restart is not a guild, so this table stores the small set: who they are, what
+        they look like, and which guild they belong to. At boot CompanionRegistry spawns exactly
+        these bots back with the same name, face and job before the rest of the world populates, and
+        re-seats them in their guild.
+
+        Deliberately NOT rows in `characters`. A bot with a real character row would be picked up by
+        the ranking pass, the character-select list, name-uniqueness checks and the deletion flow -
+        every one of which is a place for a bot to cause a bug in something the player relies on.
+        Keying by name gives the same durable identity with none of that surface.
+    -->
+    <changeSet id="bot-companions-1" author="cosmic-local">
+        <sql splitStatements="true" endDelimiter=";">
+            CREATE TABLE IF NOT EXISTS bot_companions (
+                name          VARCHAR(13)  NOT NULL,
+                ownerid       INT          NOT NULL DEFAULT 0,
+                guildid       INT          NOT NULL DEFAULT 0,
+                guildrank     INT          NOT NULL DEFAULT 5,
+                alliancerank  INT          NOT NULL DEFAULT 5,
+                baseclass     INT          NOT NULL DEFAULT 1,
+                job           INT          NOT NULL DEFAULT 0,
+                level         INT          NOT NULL DEFAULT 1,
+                gender        INT          NOT NULL DEFAULT 0,
+                skincolor     INT          NOT NULL DEFAULT 0,
+                hair          INT          NOT NULL DEFAULT 30000,
+                face          INT          NOT NULL DEFAULT 20000,
+                homemap       INT          NOT NULL DEFAULT 100000000,
+                adopted       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        </sql>
+        <rollback>
+            <sql>DROP TABLE IF EXISTS bot_companions;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

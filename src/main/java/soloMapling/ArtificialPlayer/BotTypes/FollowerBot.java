@@ -3,6 +3,9 @@ package soloMapling.ArtificialPlayer.BotTypes;
 import client.Character;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
+import soloMapling.ArtificialPlayer.BotAiSystem.BotOrders;
+import soloMapling.ArtificialPlayer.BotAttackSystem.BotAttackDriver;
+import soloMapling.ArtificialPlayer.BotAttackSystem.BotBuffDriver;
 import soloMapling.ArtificialPlayer.BotDialogueHandler;
 import soloMapling.ArtificialPlayer.BotOptionMenu;
 import soloMapling.ArtificialPlayer.BotSM;
@@ -37,6 +40,8 @@ public class FollowerBot extends BotSM {
 
     private static final long FOLLOW_TICK_MS = 750;
     private static final long LEADER_LOST_GRACE_MS = 90_000;
+    // No map change in this long while the leader is elsewhere = the portal graph has no route in.
+    private static final long CROSS_MAP_STALL_MS = 15_000;
 
     private enum FollowPhase { INIT, FOLLOW, LEADER_LOST }
 
@@ -46,6 +51,9 @@ public class FollowerBot extends BotSM {
     private volatile long leaderLostSinceMs = 0;
     private volatile boolean wasPartied = false;
     private volatile boolean pausedForTrade = false;
+    // Cross-map chase progress: the map the bot was last seen on, and when it arrived there.
+    private volatile int lastSeenMapId = -1;
+    private volatile long crossMapSinceMs = 0;
 
     // NOTE: no "here" keyword - "there" contains "here", so a casual "hi there" would trigger it.
     private final BotOptionMenu menu = new BotOptionMenu(this,
@@ -63,6 +71,15 @@ public class FollowerBot extends BotSM {
     @Override
     public void checkPrioritySpeed() {
         updateScheduleDelay(FOLLOW_TICK_MS);
+    }
+
+    // A companion keeps up while you talk to it. Suspending a follower's tick would stop the
+    // supervision that re-arms a dropped follow session and re-attaches after a relog - so the bot
+    // would quietly fall behind during the conversation and be gone by the end of it. There is no
+    // scripted routine here for the AI to supersede anyway: this FSM only follows.
+    @Override
+    protected boolean pausedByAi() {
+        return false;
     }
 
     @Override
@@ -171,6 +188,62 @@ public class FollowerBot extends BotSM {
             // Initial arm, post-trade re-arm, and relog re-attach (a dead session cleared itself;
             // the freshly resolved leader Character makes the new session current).
             GCMovement.follow(chr, leader);
+        }
+        catchUpIfStranded(chr, leader);
+        fightIfOrdered(chr);
+    }
+
+    /**
+     * The boss-door case: the leader is on a map the follow engine cannot walk to.
+     *
+     * <p>GCFollow chases across maps by travelling the portal graph, which is right almost
+     * everywhere and reads as the bot making its own way over. It cannot reach a boss interior, an
+     * event stage or a PQ map, because those are entered through an NPC or a scripted door and no
+     * portal chain leads in. Left alone the follower re-tries travel forever and never arrives.
+     *
+     * <p>The trigger is lack of PROGRESS, not elapsed time. A legitimate multi-hop trip changes map
+     * every few seconds, so it never trips this; a bot that has not changed map at all while its
+     * leader is somewhere else has no route, and gets warped in.
+     */
+    private void catchUpIfStranded(Character chr, Character leader) {
+        if (leader.getMapId() == chr.getMapId()) {
+            crossMapSinceMs = 0;
+            lastSeenMapId = chr.getMapId();
+            return;
+        }
+        if (crossMapSinceMs == 0 || chr.getMapId() != lastSeenMapId) {
+            lastSeenMapId = chr.getMapId();
+            crossMapSinceMs = now();   // just set off, or just made a hop - the chase is progressing
+            return;
+        }
+        if (now() - crossMapSinceMs < CROSS_MAP_STALL_MS) {
+            return;
+        }
+        crossMapSinceMs = now();       // re-arm, so a warp that fails is retried rather than spammed
+        java.awt.Point at = leader.getPosition();
+        if (at != null) {
+            GCMovement.warpTo(chr, leader.getMapId(), at.x, at.y);
+        }
+    }
+
+    // "Follow me and attack" - the follow engine already has the bot standing where its leader is
+    // standing, so fighting alongside them is just swinging at whatever came into reach. botAttack
+    // acquires its own target, faces it, and is cooldown-gated internally, so calling it every
+    // 750ms tick is cheap: most calls do nothing. Buffs are re-asserted on the same beat and are
+    // likewise gated by their own recast timers.
+    //
+    // The order is a standing flag rather than a field here because re-typing a bot builds a new
+    // FSM (BotTypeManager.convertBotType), and "follow me" is itself a conversion - a field would
+    // be discarded by the very command that precedes this one.
+    private void fightIfOrdered(Character chr) {
+        if (!BotOrders.isFighting(chr.getId())) {
+            return;
+        }
+        try {
+            BotBuffDriver.botBuff(chr);
+            BotAttackDriver.botAttack(chr);
+        } catch (RuntimeException e) {
+            // A swing that fails must never break the follow loop.
         }
     }
 

@@ -97,6 +97,9 @@ public class ServerConfig {
     public int BOT_LLM_MEMORY_TURNS;
     public int BOT_LLM_MAX_CONCURRENT;
 
+    //Companions - bots a player has adopted, who follow, fight, and persist across restarts
+    public int BOT_COMPANION_LIMIT;
+
     //Server Flags
     public boolean USE_CUSTOM_KEYSET;
     public boolean USE_DEBUG;

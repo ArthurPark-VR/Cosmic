@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import server.ChatLogger;
 import soloMapling.ArtificialPlayer.BotBuffRequestSystem.BotBuffRequestHandler;
 import soloMapling.ArtificialPlayer.BotMessagingSystem.ChatMessage;
+import soloMapling.ArtificialPlayer.BotAiSystem.BotTakeover;
 import soloMapling.ArtificialPlayer.BotMessagingSystem.MessageQueue;
 import tools.PacketCreator;
 
@@ -62,7 +63,14 @@ public final class GeneralChatHandler extends AbstractPacketHandler {
                 return;
             }
 
-            MessageQueue.getInstance().addMessage("primary", new ChatMessage(c.getPlayer(), s)); // SM NOTE Allows player to interact with bots.
+            // AI takeover gets the line first. It claims it only when a player is actually holding a
+            // conversation with a bot - the model up, the bot named or already engaged - and
+            // returns false for everything else, which is nearly every line spoken on the server.
+            // A claimed line must NOT also reach the queue below, or the bot answers twice: once
+            // as itself and once out of a YAML file.
+            if (!BotTakeover.onPlayerChat(chr, s)) {
+                MessageQueue.getInstance().addMessage("primary", new ChatMessage(c.getPlayer(), s)); // SM NOTE Allows player to interact with bots.
+            }
 
             BotBuffRequestHandler.tryHandle(chr, s); // SM: "hs pls" etc -> nearest eligible bot grants the buff
 

@@ -340,7 +340,35 @@ public class FMShopDescGen {
             namePool = loadAndShuffleNames();
             namePoolIndex = 0;
         }
+        // Skip anything a companion already owns. Two live characters sharing a name would break
+        // every by-name lookup in the framework - chat routing addresses bots by name, and the
+        // companion registry keys identity on it - so the pool must never hand one out twice.
+        while (namePoolIndex < namePool.size() && reservedNames.contains(namePool.get(namePoolIndex))) {
+            namePoolIndex++;
+        }
+        if (namePoolIndex >= namePool.size()) {
+            namePool = loadAndShuffleNames();
+            namePool.removeAll(reservedNames);
+            namePoolIndex = 0;
+        }
         return namePool.get(namePoolIndex++);
+    }
+
+    /** Names held by permanent companions; the pool will never hand these out. */
+    private static final java.util.Set<String> reservedNames = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** Claim a name for a companion, so no ordinary bot is ever spawned holding it. */
+    public static synchronized void reserveName(String name) {
+        if (name != null && !name.isBlank()) {
+            reservedNames.add(name);
+        }
+    }
+
+    /** Release a name when a companion is dismissed, returning it to the pool. */
+    public static synchronized void releaseName(String name) {
+        if (name != null) {
+            reservedNames.remove(name);
+        }
     }
 
     private static List<String> loadAndShuffleNames() {

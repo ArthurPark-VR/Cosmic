@@ -10484,6 +10484,11 @@ public class Character extends AbstractCharacterObject {
     public void logOff() {
         this.loggedIn = false;
 
+        // Release any bot this player was holding a conversation with. The takeover sweep would
+        // notice within 15 seconds anyway; doing it here means a bot is never left standing frozen
+        // in the moment after its only listener disconnects.
+        soloMapling.ArtificialPlayer.BotAiSystem.BotTakeover.forgetPlayer(getId());
+
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE characters SET lastLogoutTime=? WHERE id=?")) {
             ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));

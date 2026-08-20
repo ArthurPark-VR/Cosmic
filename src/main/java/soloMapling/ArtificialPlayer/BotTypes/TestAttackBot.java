@@ -13,6 +13,13 @@ import soloMapling.ArtificialPlayer.BotSM;
  */
 public class TestAttackBot extends BotSM {
 
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
+
     public TestAttackBot(Character character) {
         super(character);
         botType = "TestAttackBot";

@@ -186,6 +186,37 @@ public final class GCMovement {
         BotMovementManager.broadcastMovement(st);
     }
 
+    /*
+     * Warp the bot straight onto another map, next to (x,y), with no portal chain.
+     *
+     * travel() is the right call almost everywhere - it walks the portal graph and reads as a
+     * player making their way over. It cannot reach the maps that matter most here: a boss
+     * interior is entered through an NPC or a scripted door, not a portal a bot can walk into,
+     * so no chain exists to walk. This is the escape hatch for exactly that case, and callers
+     * should reach for travel() first and fall back to this only when travel has no route.
+     *
+     * The arrival still renders: the driver's onMapChange sees the new map id on its next tick
+     * and plays the float-and-drop, so a warped-in bot lands like anyone coming through a door.
+     */
+    public static boolean warpTo(Character bot, int mapId, int x, int y) {
+        if (bot == null || bot.getMap() == null) {
+            return false;
+        }
+        enable(bot);
+        cancelTravel(bot);
+        try {
+            MapleMap to = bot.getMap().getChannelServer().getMapFactory().getMap(mapId);
+            if (to == null) {
+                return false;
+            }
+            Point ground = BotPhysicsEngine.findGroundPoint(to, new Point(x, y));
+            bot.changeMap(to, ground != null ? ground : new Point(x, y));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /* Flag the bot as combat-alerted so it renders the 5s ALERT pose. The observing client already starts
      * its own alert timer when it renders our attack packet; this keeps the bot's OWN movement broadcasts
      * carrying ALERT instead of STAND for the duration, so a following idle/move packet doesn't cancel the

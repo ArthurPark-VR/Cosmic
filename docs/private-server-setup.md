@@ -247,6 +247,97 @@ The buffs are applied directly rather than cast, which is what lets a normal cha
 receive GM-only buffs - casting them would be rejected, but applying the effect never goes
 through that check.
 
+## The other players
+
+The world comes up populated - roughly 1,900 characters wandering towns, grinding fields and
+running Free Market shops. They are bots, and they are scenery: nothing about them is stored,
+and they are different people every restart.
+
+Except the ones you adopt.
+
+### Talking to them
+
+Say a bot's name in map chat and it answers as itself. What it says comes from a local language
+model reading its actual game state - job, level, gear tier, where it is, what it is doing - so a
+level 128 Night Lord in Sleepywood does not talk like a level 19 beginner loitering in Henesys,
+and nothing is authored per bot.
+
+While you are talking, that bot stops whatever routine it was running. Its scripted lines and its
+wandering are suspended; you have its attention. It goes back to normal when you say a parting
+word ("later", "go on", "thanks"), after three minutes of silence, or when you leave the map.
+
+Only one bot at a time listens to you. Saying a different bot's name moves the conversation to
+them.
+
+The bots whose chat menu *is* the feature - the gacha machine, the blackjack dealer, the shops,
+the OPQ runners - keep their scripted menus and are never taken over.
+
+### Telling them what to do
+
+Ordinary words work, and they work whether or not the language model is running:
+
+| Say | What happens |
+| --- | --- |
+| "follow me" | tails you everywhere, across maps and through portals |
+| "attack" / "help me fight" | fights alongside you, and follows so it can |
+| "stop attacking" | stops fighting, keeps following |
+| "stay here" / "stop following" | stops following and settles where it stands |
+| "party up" | joins your party (make one first - it will not create one for you) |
+| "join my guild" | joins your guild, **and becomes permanent** - see below |
+| "come here" | warps to you, however far away it is |
+
+Two things to know before you take one to a boss. A companion's damage is **cosmetic** - the
+numbers are scaled off the mob and are for feel, not a real contribution to the kill, so a
+companion is company rather than a second damage dealer. And it cannot die: bots take contact
+damage as a visual (knockback, damage numbers, the hurt pose) but it never touches their HP.
+
+"come here" is the one that matters for bossing. A follower normally walks to you the way a
+player would, and there is no walking route into a boss interior - those are entered through an
+NPC or a scripted door. "Come here" skips the journey. A companion already following you does
+this by itself: if it cannot find a route to your map, it warps in after about fifteen seconds.
+
+### Companions
+
+Inviting a bot into your guild adopts it. From then on it is the same character every restart -
+same name, same face, same class, same level, still in your guild - while every other bot in the
+world is regenerated from scratch.
+
+`BOT_COMPANION_LIMIT` in `config.yaml` caps both how many you can adopt and how many can follow
+you at once. It defaults to 6, and small is deliberate: followers tick fast and are exempt from
+the server's load governor, which is right for a companion standing next to you and expensive for
+a crowd.
+
+Companions are stored in the `bot_companions` table, not in `characters`. They are not real
+accounts and cannot be logged into - keeping them out of `characters` keeps them out of the
+rankings, the character-select list and the deletion flow.
+
+You will rarely need these - chat is the interface - but there are GM commands too. `!bot
+companions` prints each companion's character id, which is the `<id>` the others take, and `!bot
+help` lists everything:
+
+```
+!bot companions          list your companions
+!bot adopt <id>          adopt without the guild step
+!bot dismiss <id>        drop a companion back to being scenery
+!bot fight <id>          order it to fight alongside you
+!bot holdfire <id>       order it to stop
+!bot comehere <id>       warp it to you
+!bot followbot <id>      make it follow you
+```
+
+### How many bots
+
+`BOT_POPULATION_SCALE` in `config.yaml` scales the wandering cohorts - town presence and the
+training fields. `0.5` is half of what SoloMapling intends.
+
+The Free Market is deliberately **not** scaled by it. The shops are the point of the FM, and a
+half-stocked market reads as a dead server in a way a quiet Henesys does not, so it stays at full
+population no matter how far the rest of the world is dialled down. Expect it to be the densest
+place on the server; the startup log prints one line per room so you can see it.
+
+Walking into a busy town for the first time after a restart is heavy - the client has to take in
+hundreds of avatars at once. That cost is paid once, not continuously.
+
 ## Your save data
 
 Everything - accounts, characters, inventory - lives in MySQL, stored on disk at

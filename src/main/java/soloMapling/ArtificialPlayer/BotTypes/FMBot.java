@@ -40,6 +40,13 @@ import static soloMapling.ArtificialPlayer.BotMovementSystem.NavigationSystem.FM
 import static soloMapling.BotLogger.log;
 
 public class FMBot extends BotSM {
+
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
     private FMBotState fmBotState = FMBotState.RESET;
     private List<String> hint = Collections.singletonList(getChr().getName());
 

@@ -29,6 +29,13 @@ import static soloMapling.FreeMarket.FMEconomyManager.priceAdjustmentRules;
 import static soloMapling.itemPool.UpgradeSimulator.getEquipMarketValue;
 
 public class ScrollingBot extends BotSM {
+
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
     private ScrollingBotState scrollingBotState = ScrollingBotState.RESET;
     private List<String> hint = Collections.singletonList(getChr().getName());
     private List<FMEquip> itemsToScroll = new ArrayList<>();

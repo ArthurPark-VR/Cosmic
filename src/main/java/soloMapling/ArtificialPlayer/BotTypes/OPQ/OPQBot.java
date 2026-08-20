@@ -52,6 +52,13 @@ import static soloMapling.DebugUtilities.debugprint;
  */
 public class OPQBot extends BotSM {
 
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
+
     // volatile: the swing chains run off-tick and read/write these
     private volatile OPQBotState opqBotState = OPQBotState.RESET;
     private final OPQOrchestrator orchestrator;

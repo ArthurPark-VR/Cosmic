@@ -28,6 +28,13 @@ import static soloMapling.server.SoloMaplingUtilities.random;
 
 public class BlackjackDealerBot extends BotSM {
 
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
+
     private final BlackjackTable table;
 
     // Timing

@@ -84,16 +84,14 @@ public class Dispatcher implements Runnable {
                 return;
             }
 
-            // AI dialogue gets first refusal. This is the one place in the framework that already
-            // knows both who spoke and which bot was addressed, so it is the only place the hook
-            // needs to exist. tryReply returns false whenever the model is off, unreachable,
-            // saturated, or the bot is already answering - and then the scripted session below
-            // runs exactly as it always did. There is never both.
-            if (soloMapling.ArtificialPlayer.BotAiSystem.BotAiChat.tryReply(
-                    bot.getChr(), message.getSender(), message.getContent())) {
-                return;
-            }
-
+            // No AI hook here any more. It used to live at this line, and having a second entry
+            // point turned out to be the bug: the takeover layer skips the bots whose chat menu IS
+            // the feature (gacha, blackjack, shops, OPQ), and those messages then fell through to
+            // here, where the old hook answered them with dialogue and swallowed the menu.
+            //
+            // AI dialogue now starts in exactly one place - BotTakeover, off GeneralChatHandler -
+            // which claims a line before it ever reaches this queue. Anything that arrives here is
+            // by definition something the AI declined, so the scripted session below is correct.
             if (!bot.getRunning()) {
                 startNewBotSession(bot, message);
             } else {

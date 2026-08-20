@@ -30,6 +30,13 @@ import static soloMapling.server.SoloMaplingUtilities.random;
 
 public class DropGameBot extends BotSM {
 
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
+
     // --- Configuration ---
     private static final int MEDIUM_TIER_COST = 10_000_000;
     private static final int ELITE_TIER_COST  = 50_000_000;

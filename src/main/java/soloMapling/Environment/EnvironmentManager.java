@@ -9,6 +9,7 @@ import soloMapling.ArtificialPlayer.BotDecoratorSystem.BotDecorate;
 import soloMapling.ArtificialPlayer.BotDecoratorSystem.BotDecorationQueue;
 import soloMapling.ArtificialPlayer.BotDecoratorSystem.BotEquipChecker;
 import soloMapling.ArtificialPlayer.BotHelpers;
+import soloMapling.ArtificialPlayer.BotAiSystem.CompanionRegistry;
 import soloMapling.ArtificialPlayer.BotMapEntryResponder;
 import soloMapling.ArtificialPlayer.BotSM;
 import soloMapling.ArtificialPlayer.BotTypeManager;
@@ -101,6 +102,16 @@ public class EnvironmentManager {
         // Wake bots instantly (movement + macro brain) whenever a real player shares their map, in both
         // directions - a player entering a populated map, or a bot returning to the player's map.
         BotMapEntryResponder.register();
+
+        // Before ANY bot spawns: the companions' names have to be claimed out of the shuffled name
+        // pool first, or a piece of scenery can be handed a name a companion already owns and the
+        // two become indistinguishable to every by-name lookup in the framework.
+        CompanionRegistry.load();
+        // Restored ahead of the waves rather than inside one, and on this thread. Wave tasks run
+        // in parallel, and a bot arriving on a map encodes the look of everyone already standing
+        // there - including bots another wave task is still dressing, whose inventories are being
+        // mutated as they are read. Going first means the world is empty when the companions land.
+        CompanionRegistry.restore();
 
         runWave(1, "Essentials", List.of(
                 () -> spawnCasinoNpcs(),
@@ -422,9 +433,29 @@ public class EnvironmentManager {
         // choreography sleeps, readiness latches), so they shouldn't occupy
         // the fixed thread pool.
         CompletableFuture<?>[] futures = tasks.stream()
-                .map(task -> CompletableFuture.runAsync(task, ExecutorServiceManager.getVirtualThreadExecutorService()))
+                .map(task -> CompletableFuture.runAsync(guarded(task),
+                        ExecutorServiceManager.getVirtualThreadExecutorService()))
                 .toArray(CompletableFuture[]::new);
         CompletableFuture.allOf(futures).join();
+    }
+
+    /*
+     * One cohort failing must cost that cohort and nothing else.
+     *
+     * Without this, a throw anywhere inside a wave task propagates through allOf().join() and out
+     * of environmentLoadStartup entirely, and every remaining wave is silently skipped - the world
+     * comes up a fraction populated with one stack trace to explain it. That is the failure mode a
+     * server owner reports as "the bots didn't load", which is a long way from the truth.
+     */
+    private static Runnable guarded(Runnable task) {
+        return () -> {
+            try {
+                task.run();
+            } catch (Throwable t) {
+                System.out.println("[EnvironmentManager] wave task failed: " + t);
+                t.printStackTrace();
+            }
+        };
     }
 
     /*

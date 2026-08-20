@@ -420,7 +420,33 @@ public abstract class BotSM implements EventSubscriber {
         if (verifyState(BotState.PAUSE)) {
             return true;
         }
-        return false;
+        return pausedByAi();
+    }
+
+    /**
+     * May a player start an AI conversation with this bot?
+     *
+     * <p>True for the bots that are only ever people - wanderers, grinders, townsfolk, companions.
+     * False for the ones whose chat menu IS the feature: a gacha machine, a blackjack dealer, a
+     * shop, an OPQ runner. Taking one of those over would replace working content with small talk,
+     * which is a bad trade even when the small talk is better written.
+     */
+    public boolean allowsAiTakeover() {
+        return true;
+    }
+
+    /**
+     * True while a player is holding a conversation through this bot, in which case its scripted
+     * routine must not run: the whole point of engaging a bot is that the AI supersedes the script.
+     *
+     * <p>Not BotState.PAUSE, which looks like the natural home for this and is not. PAUSE resumes on
+     * checkMainPlayersOnMap() - true precisely when the player is standing there talking - so a
+     * conversation-paused bot would un-pause on its very next tick.
+     *
+     * <p>Overridden by bot types whose tick is doing something a conversation should not interrupt.
+     */
+    protected boolean pausedByAi() {
+        return soloMapling.ArtificialPlayer.BotAiSystem.BotTakeover.isEngaged(getChr().getId());
     }
 
     public void displayCommands(Character chr) {

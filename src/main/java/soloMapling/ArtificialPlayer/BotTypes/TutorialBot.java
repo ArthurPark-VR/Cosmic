@@ -46,6 +46,13 @@ import static soloMapling.BotLogger.log;
 import static soloMapling.server.SoloMaplingUtilities.random;
 
 public class TutorialBot extends BotSM {
+
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
     private TutorialBotState tutorialBotState = TutorialBotState.RESET;
     private Boolean runTutorial;
     private Boolean tutPicked;

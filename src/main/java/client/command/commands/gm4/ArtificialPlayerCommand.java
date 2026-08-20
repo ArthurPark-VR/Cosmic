@@ -23,6 +23,10 @@ import soloMapling.ArtificialPlayer.BotTypes.TrainingBot;
 import soloMapling.ArtificialPlayer.BotGrindSystem.MapMobIndex;
 import soloMapling.ArtificialPlayer.BotGrindSystem.RestSpotFinder;
 import soloMapling.ArtificialPlayer.BotPartySystem.BotPartyCommands;
+import soloMapling.ArtificialPlayer.BotAiSystem.BotActions;
+import soloMapling.ArtificialPlayer.BotAiSystem.BotIntent;
+import soloMapling.ArtificialPlayer.BotAiSystem.BotOrders;
+import soloMapling.ArtificialPlayer.BotAiSystem.CompanionRegistry;
 import soloMapling.ArtificialPlayer.BotPartySystem.BotPartyQueue;
 import soloMapling.ArtificialPlayer.BotPartySystem.BotRecruitManager;
 import soloMapling.ArtificialPlayer.BotMessagingSystem.QueueMonitor;
@@ -187,6 +191,9 @@ public class ArtificialPlayerCommand extends Command {
             case "nxcode":
                 createCompleteNXCode("GERALTYENNEFER69");
                 break;
+            case "companions":
+                listCompanions();
+                break;
             default:
                 player.yellowMessage("Invalid command - Direct Command");
                 break;
@@ -318,6 +325,35 @@ public class ArtificialPlayerCommand extends Command {
                         : "Conversion refused - bot is mid-trade.");
                 break;
             }
+            // Companion controls, so every one of these is testable without the language model
+            // running. The chat route ("follow me", "attack", "join my guild") reaches exactly the
+            // same code in BotActions.
+            case "adopt": {
+                boolean ok = CompanionRegistry.adopt(fakechar, c.getPlayer());
+                player.yellowMessage(ok
+                        ? fakechar.getName() + " is now a permanent companion ("
+                                + CompanionRegistry.count() + "/" + CompanionRegistry.cap() + ")."
+                        : "Companion roster is full (" + CompanionRegistry.cap()
+                                + ") - dismiss one first.");
+                break;
+            }
+            case "dismiss":
+                CompanionRegistry.dismiss(fakechar.getName());
+                BotOrders.clear(fakechar.getId());
+                player.yellowMessage(fakechar.getName() + " is no longer a companion.");
+                break;
+            case "fight":
+                player.yellowMessage(describe(fakechar,
+                        BotActions.apply(fakechar, c.getPlayer(), BotIntent.FIGHT)));
+                break;
+            case "holdfire":
+                player.yellowMessage(describe(fakechar,
+                        BotActions.apply(fakechar, c.getPlayer(), BotIntent.HOLD)));
+                break;
+            case "comehere":
+                player.yellowMessage(describe(fakechar,
+                        BotActions.apply(fakechar, c.getPlayer(), BotIntent.COME)));
+                break;
             case "manualstart":
                 manuallyStartBot(fakechar);
                 break;
@@ -928,6 +964,14 @@ public class ArtificialPlayerCommand extends Command {
         player.yellowMessage("!bot breaknow <cid>              - force a grinding TrainingBot's rest break");
         player.yellowMessage("!bot restspot <cid>              - dump ranked rest-spot candidates (why a break spot won)");
         player.yellowMessage("!bot massfmbot <start> <end>     - mass create FM bots");
+        player.yellowMessage("-- Companions --");
+        player.yellowMessage("!bot companions                  - list your companions (name, id, level, guild)");
+        player.yellowMessage("!bot adopt <cid>                 - make permanent: same character every restart");
+        player.yellowMessage("!bot dismiss <cid>               - drop back to being ordinary scenery");
+        player.yellowMessage("!bot fight <cid>                 - fight alongside you (follows too)");
+        player.yellowMessage("!bot holdfire <cid>              - stop fighting, keep following");
+        player.yellowMessage("!bot comehere <cid>              - warp it to you (the boss-door case)");
+        player.yellowMessage("   all of the above are also plain chat: \"follow me\", \"attack\", \"come here\"");
         player.yellowMessage("-- Loot --");
         player.yellowMessage("!bot loot <cid>                  - loot at feet");
         player.yellowMessage("!bot lootwide <cid>              - loot wide area");
@@ -1039,4 +1083,25 @@ public class ArtificialPlayerCommand extends Command {
     }
 
 
+
+    private static void listCompanions() {
+        player.yellowMessage("Companions: " + CompanionRegistry.count() + "/" + CompanionRegistry.cap());
+        for (Character chr : net.server.Server.getInstance()
+                .getChannel(0, 1).getPlayerStorage().getAllCharacters()) {
+            if (CompanionRegistry.isCompanion(chr.getId())) {
+                player.yellowMessage("  " + chr.getName() + "  id " + chr.getId()
+                        + "  lv " + chr.getLevel()
+                        + (chr.getGuildId() > 0 ? "  guild " + chr.getGuildId() : "")
+                        + (BotOrders.isFighting(chr.getId()) ? "  [fighting]" : ""));
+            }
+        }
+    }
+
+    private static String describe(Character bot, BotActions.Outcome outcome) {
+        return switch (outcome) {
+            case DONE -> bot.getName() + ": done.";
+            case ALREADY -> bot.getName() + ": already was.";
+            case REFUSED -> bot.getName() + ": refused (cap reached, no party/guild, or mid-trade).";
+        };
+    }
 }

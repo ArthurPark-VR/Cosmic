@@ -22,6 +22,13 @@ import static soloMapling.ArtificialPlayer.BotLogic.announceBetString;
 import static soloMapling.BotLogger.log;
 
 public class DiceBot extends BotSM {
+
+    // Chat with this bot IS a feature - the menu below is the game. An AI conversation would
+    // replace working content with small talk, so this type is never taken over.
+    @Override
+    public boolean allowsAiTakeover() {
+        return false;
+    }
     private DiceBotState diceBotState = DiceBotState.RESET;
     private BetType currentBet = BetType.NONE;
     int[] rolls;

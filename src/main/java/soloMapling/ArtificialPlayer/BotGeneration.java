@@ -145,6 +145,19 @@ public class BotGeneration {
 
     // forcedJobId > 0 pins the exact job (GM 'trainhere' test spawn); 0 = a random job for the class.
     public static int createBot(Point pos, MapleMap map, int baseClass, int minLevel, int maxLevel, int forcedJobId) {
+        return createBot(pos, map, baseClass, minLevel, maxLevel, forcedJobId, null);
+    }
+
+    /*
+     * As above, with forcedName pinning the bot's name instead of drawing one off the pool - the
+     * companion-restore path, which has to bring a specific character back.
+     *
+     * The name has to be set BEFORE the bot is registered, not after: PlayerStorage indexes by name
+     * at addPlayer time, so a bot renamed afterwards stays findable only under the name it was
+     * registered with. Guild invitations, whispers and every other by-name lookup would miss it.
+     */
+    public static int createBot(Point pos, MapleMap map, int baseClass, int minLevel, int maxLevel,
+                                int forcedJobId, String forcedName) {
         int cid = resolveTemplateCid();
         if (cid == TEMPLATE_MISSING) {
             return -1;   // refuse rather than clone whoever happens to hold id 2
@@ -158,7 +171,7 @@ public class BotGeneration {
             e.printStackTrace();
         }
         int botId = SoloMaplingConstants.GameConstants.BOT_BASE_ID + currentBotCount.getAndIncrement();
-        bot = setBotStats(bot, botId); // Bot onDemandBot
+        bot = setBotStats(bot, botId, forcedName); // Bot onDemandBot
         addBotToServer(bot);
         placeBotOnMap(bot, pos, map);
         // Decorate before the drop-down plays so the bot arrives fully dressed
@@ -239,9 +252,16 @@ public class BotGeneration {
     }
 
     private static Character setBotStats(Character baseChr, int botId) {
+        return setBotStats(baseChr, botId, null);
+    }
+
+    private static Character setBotStats(Character baseChr, int botId, String forcedName) {
         Character onDemandBot = baseChr; // Character.getDefault(c)
         onDemandBot.setClient(getBotClient());
-        onDemandBot.setName(getRandomCharacterIGN());
+        // A forced name is a companion coming back as itself; drawing from the pool would both
+        // hand it the wrong name and burn a pool entry.
+        onDemandBot.setName(forcedName != null && !forcedName.isBlank()
+                ? forcedName : getRandomCharacterIGN());
         onDemandBot.setID(botId);
         onDemandBot.setFame(botId); // debug purposes
         return onDemandBot;
@@ -251,6 +271,8 @@ public class BotGeneration {
         // Drop any AI conversation history for this name, or the map grows for the life of the
         // process. Done here rather than on a timer because despawn is the exact moment it dies.
         soloMapling.ArtificialPlayer.BotAiSystem.BotAiChat.forget(fakechar.getName());
+        soloMapling.ArtificialPlayer.BotAiSystem.BotTakeover.forgetBot(fakechar.getId());
+        soloMapling.ArtificialPlayer.BotAiSystem.BotOrders.clear(fakechar.getId());
         fakechar.getMap().removePlayer(fakechar);
         channel.removePlayer(fakechar);
         world.getPlayerStorage().removePlayer(fakechar.getId());
