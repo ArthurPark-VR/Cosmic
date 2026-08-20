@@ -1793,8 +1793,16 @@ public class World {
     }
     
     public void runPlayerHpDecreaseSchedule() {
-        Map<Character, Integer> m = new HashMap<>();
-        m.putAll(playerHpDec);
+        // Copied under the map's own monitor. playerHpDec is a synchronizedMap, whose contract is
+        // that iterating it - which is what building a copy does - requires holding that monitor
+        // manually. Without this the copy races anyone entering or leaving a damage-over-time map
+        // and throws ConcurrentModificationException, which aborts the whole pass: every player on
+        // such a map skips that tick of damage. A world with thousands of characters logging in at
+        // once makes it frequent rather than theoretical.
+        Map<Character, Integer> m;
+        synchronized (playerHpDec) {
+            m = new HashMap<>(playerHpDec);
+        }
         
         for (Entry<Character, Integer> e : m.entrySet()) {
             Character chr = e.getKey();
