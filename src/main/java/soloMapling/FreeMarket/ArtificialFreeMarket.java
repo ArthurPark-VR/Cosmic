@@ -87,22 +87,17 @@ public class ArtificialFreeMarket {
 
         double hiredMerchantChance = getHiredMerchantChance(mapId);
 
-        // Free Market shops are the largest single block of bots - roughly 571 spots across the
-        // four regions - and a solo player rarely uses the FM at all. Scaled by the same
-        // BOT_POPULATION_SCALE as everything else, keeping at least a handful per room so the
-        // market still looks open rather than abandoned.
-        int fmWanted = soloMapling.Environment.EnvironmentManager.scaled(positions.size());
-        int fmTaken = 0;
-
+        // Deliberately NOT scaled by BOT_POPULATION_SCALE. Every other cohort is scenery and
+        // thins out gracefully, but the shops ARE the Free Market - a half-stocked market reads
+        // as a dead server in a way a quiet Henesys does not. The FM therefore stays at full
+        // population no matter how far the rest of the world is dialled down.
+        int taken = 0;
         for (Point position : positions) {
-            if (fmTaken >= fmWanted) {
-                break;
-            }
             // ~2% per-spot skip. Use continue so we don't abandon the rest of the room.
             if (chance(2)) {
                 continue;
             }
-            fmTaken++;
+            taken++;
             if (Math.random() < hiredMerchantChance) {
                 ExecutorServiceManager.runAsync(() -> spawnHiredMerchantStore(mapId, position));
             } else {
@@ -112,6 +107,11 @@ public class ArtificialFreeMarket {
                         delay, TimeUnit.MILLISECONDS);
             }
         }
+        // Reported per room because the shops are staggered over the following seconds and so are
+        // NOT included in the wave totals the startup log prints - without this the Free Market is
+        // invisible in the only place a server owner looks to see how populated their world is.
+        System.out.println("[FreeMarket] room " + mapId + ": " + taken + "/" + positions.size()
+                + " spots taken");
     }
 
 //    public static void populateFreeMarket(String region, int mapId) {

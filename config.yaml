@@ -204,16 +204,19 @@ server:
     #Other configuration
     SHUTDOWNHOOK: true
     SPAWN_BOTS_ON_STARTUP: true         #SoloMapling: auto-populate the world with bots on server startup (no player/relog needed). Set false to disable bot spawning.
-    BOT_POPULATION_SCALE: 1.0    #Scales every bot cohort at startup: training bots, town
-                                 #presence, and Free Market shops. 1.0 is SoloMapling's own
-                                 #intended population, roughly 3000 bots.
+    BOT_POPULATION_SCALE: 0.5    #Scales the wandering bot cohorts at startup: training bots and
+                                 #town presence. 1.0 is SoloMapling's own intended population,
+                                 #roughly 3000 bots; 0.5 halves the towns and training fields.
+                                 #
+                                 #The Free Market is deliberately NOT scaled by this - the shops
+                                 #are the point of the FM, and a half-empty market reads as a dead
+                                 #server. Expect the FM to be the densest place on the world.
                                  #
                                  #Expect a heavy one-time load when you first walk into a busy
                                  #town - the client has to take in hundreds of avatars at once.
                                  #That cost is paid once, not continuously; the server itself is
                                  #scale-tested by its authors to 6571 bots with the load governor
-                                 #never engaging. Lower this only if the lag persists AFTER
-                                 #everything has loaded, which would mean a real server problem.
+                                 #never engaging.
 
     #Bot AI dialogue.
     #When a player says a bot's name in map chat, a local LLM answers as that bot instead of
@@ -236,6 +239,17 @@ server:
                                         #on purpose: 8B models lose coherence with long context.
     BOT_LLM_MAX_CONCURRENT: 3           #Generations in flight at once. One model on one GPU is
                                         #the bottleneck; more than this just queues and times out.
+
+    #Companions.
+    #Tell a bot to follow you and it tails you across maps; tell it to attack and it fights
+    #beside you; invite it to your guild and it becomes permanent - the same name, face and
+    #class every time you log in, still in your guild. Everything else about a bot is thrown
+    #away at shutdown, so this is the number of bots that are actually people.
+    #
+    #Kept small on purpose. Followers tick at a pinned 750ms and are exempt from the load
+    #governor, which is the right trade for a companion standing next to you and the wrong one
+    #for a crowd. This caps both how many can follow you at once and how many can be adopted.
+    BOT_COMPANION_LIMIT: 6
 
     #Server Flags
     USE_CUSTOM_KEYSET: false             #Enables auto-setup of the HeavenMS's custom keybindings when creating characters.
