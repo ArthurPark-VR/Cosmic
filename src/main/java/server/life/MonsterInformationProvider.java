@@ -39,6 +39,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -56,21 +57,32 @@ public class MonsterInformationProvider {
         return instance;
     }
 
-    private final Map<Integer, List<MonsterDropEntry>> drops = new HashMap<>();
-    private final List<MonsterGlobalDropEntry> globaldrops = new ArrayList<>();
-    private final Map<Integer, List<MonsterGlobalDropEntry>> continentDrops = new HashMap<>();
+    /*
+     * Lazily filled on first lookup, from whatever thread asks first - and on this server that is
+     * a tick wheel driving a couple of thousand bots, every one of which asks isBoss() before it
+     * decides how to swing.
+     *
+     * Plain HashMaps here had the same defect as the item caches in ItemInformationProvider: two
+     * threads filling one during a resize can leave the table structurally broken, after which a
+     * later get can follow a corrupted chain and spin forever - a hung thread with no exception to
+     * explain it. Wrapped rather than swapped for ConcurrentHashMap so null values and every
+     * existing get/put/computeIfAbsent semantic stay exactly as they were.
+     */
+    private final Map<Integer, List<MonsterDropEntry>> drops = Collections.synchronizedMap(new HashMap<>());
+    private final List<MonsterGlobalDropEntry> globaldrops = Collections.synchronizedList(new ArrayList<>());
+    private final Map<Integer, List<MonsterGlobalDropEntry>> continentDrops = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Integer, List<Integer>> dropsChancePool = new HashMap<>();    // thanks to ronan
-    private final Set<Integer> hasNoMultiEquipDrops = new HashSet<>();
-    private final Map<Integer, List<MonsterDropEntry>> extraMultiEquipDrops = new HashMap<>();
+    private final Map<Integer, List<Integer>> dropsChancePool = Collections.synchronizedMap(new HashMap<>());    // thanks to ronan
+    private final Set<Integer> hasNoMultiEquipDrops = Collections.synchronizedSet(new HashSet<>());
+    private final Map<Integer, List<MonsterDropEntry>> extraMultiEquipDrops = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Pair<Integer, Integer>, Integer> mobAttackAnimationTime = new HashMap<>();
-    private final Map<MobSkill, Integer> mobSkillAnimationTime = new HashMap<>();
+    private final Map<Pair<Integer, Integer>, Integer> mobAttackAnimationTime = Collections.synchronizedMap(new HashMap<>());
+    private final Map<MobSkill, Integer> mobSkillAnimationTime = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Integer, Pair<Integer, Integer>> mobAttackInfo = new HashMap<>();
+    private final Map<Integer, Pair<Integer, Integer>> mobAttackInfo = Collections.synchronizedMap(new HashMap<>());
 
-    private final Map<Integer, Boolean> mobBossCache = new HashMap<>();
-    private final Map<Integer, String> mobNameCache = new HashMap<>();
+    private final Map<Integer, Boolean> mobBossCache = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Integer, String> mobNameCache = Collections.synchronizedMap(new HashMap<>());
 
     protected MonsterInformationProvider() {
         retrieveGlobal();
@@ -82,9 +94,14 @@ public class MonsterInformationProvider {
     }
 
     private List<MonsterGlobalDropEntry> loadContinentDrops(int continentId) {
-        return globaldrops.stream()
-                .filter(dropEntry -> dropEntry.continentid < 0 || dropEntry.continentid == continentId)
-                .toList();
+        // Traversed under the list's own monitor: a synchronized list makes each individual
+        // operation atomic but not an iteration, and this one can run while a GM's drop reload is
+        // clearing and refilling the list underneath it.
+        synchronized (globaldrops) {
+            return globaldrops.stream()
+                    .filter(dropEntry -> dropEntry.continentid < 0 || dropEntry.continentid == continentId)
+                    .toList();
+        }
     }
 
     private void retrieveGlobal() {

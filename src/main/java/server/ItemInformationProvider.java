@@ -64,6 +64,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -94,52 +95,72 @@ public class ItemInformationProvider {
     protected Data etcStringData;
     protected Data insStringData;
     protected Data petStringData;
-    protected Map<Integer, Short> slotMaxCache = new HashMap<>();
-    protected Map<Integer, StatEffect> itemEffects = new HashMap<>();
-    protected Map<Integer, Map<String, Integer>> equipStatsCache = new HashMap<>();
-    protected Map<Integer, Equip> equipCache = new HashMap<>();
-    protected Map<Integer, Data> equipLevelInfoCache = new HashMap<>();
-    protected Map<Integer, Integer> equipLevelReqCache = new HashMap<>();
-    protected Map<Integer, Integer> equipMaxLevelCache = new HashMap<>();
-    protected Map<Integer, List<Integer>> scrollReqsCache = new HashMap<>();
-    protected Map<Integer, Integer> wholePriceCache = new HashMap<>();
-    protected Map<Integer, Double> unitPriceCache = new HashMap<>();
-    protected Map<Integer, Integer> projectileWatkCache = new HashMap<>();
-    protected Map<Integer, String> nameCache = new HashMap<>();
-    protected Map<Integer, String> descCache = new HashMap<>();
-    protected Map<Integer, String> msgCache = new HashMap<>();
-    protected Map<Integer, Boolean> accountItemRestrictionCache = new HashMap<>();
-    protected Map<Integer, Boolean> dropRestrictionCache = new HashMap<>();
-    protected Map<Integer, Boolean> pickupRestrictionCache = new HashMap<>();
-    protected Map<Integer, Integer> getMesoCache = new HashMap<>();
-    protected Map<Integer, Integer> monsterBookID = new HashMap<>();
-    protected Map<Integer, Boolean> untradeableCache = new HashMap<>();
-    protected Map<Integer, Boolean> onEquipUntradeableCache = new HashMap<>();
-    protected Map<Integer, ScriptedItem> scriptedItemCache = new HashMap<>();
-    protected Map<Integer, Boolean> karmaCache = new HashMap<>();
-    protected Map<Integer, Integer> triggerItemCache = new HashMap<>();
-    protected Map<Integer, Integer> expCache = new HashMap<>();
-    protected Map<Integer, Integer> createItem = new HashMap<>();
-    protected Map<Integer, Integer> mobItem = new HashMap<>();
-    protected Map<Integer, Integer> useDelay = new HashMap<>();
-    protected Map<Integer, Integer> mobHP = new HashMap<>();
-    protected Map<Integer, Integer> levelCache = new HashMap<>();
-    protected Map<Integer, Pair<Integer, List<RewardItem>>> rewardCache = new HashMap<>();
+    /*
+     * Every cache below is lazily filled on first lookup and then read forever, from whichever
+     * thread happens to ask - client handlers, the scheduler, and (on this server) a tick wheel
+     * driving a couple of thousand bots.
+     *
+     * They were plain HashMaps. Two threads filling one on the same tick can interleave inside a
+     * resize and leave the table structurally broken, and a broken table does not throw: a later
+     * get can follow a corrupted bucket chain and spin forever, hanging that thread with no stack
+     * trace to explain it. That is a far worse failure than the wasted work it comes from.
+     *
+     * Wrapped rather than swapped for ConcurrentHashMap, deliberately: several of these legitimately
+     * cache a null (an item with no name, no message, no scroll requirements), which a
+     * ConcurrentHashMap rejects outright. Wrapping keeps every existing containsKey/get/put
+     * semantic exactly as it was and only makes each one atomic.
+     *
+     * The surrounding check-then-fill is still not atomic, and is left that way on purpose. Two
+     * threads may both miss and both compute the same value; the loser's put simply overwrites an
+     * identical entry. Holding a lock across the whole WZ read instead would serialise every miss
+     * in the server to buy nothing.
+     */
+    protected Map<Integer, Short> slotMaxCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, StatEffect> itemEffects = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Map<String, Integer>> equipStatsCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Equip> equipCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Data> equipLevelInfoCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> equipLevelReqCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> equipMaxLevelCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, List<Integer>> scrollReqsCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> wholePriceCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Double> unitPriceCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> projectileWatkCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, String> nameCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, String> descCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, String> msgCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> accountItemRestrictionCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> dropRestrictionCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> pickupRestrictionCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> getMesoCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> monsterBookID = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> untradeableCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> onEquipUntradeableCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, ScriptedItem> scriptedItemCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> karmaCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> triggerItemCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> expCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> createItem = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> mobItem = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> useDelay = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> mobHP = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> levelCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Pair<Integer, List<RewardItem>>> rewardCache = Collections.synchronizedMap(new HashMap<>());
     protected List<Pair<Integer, String>> itemNameCache = new ArrayList<>();
-    protected Map<Integer, Boolean> consumeOnPickupCache = new HashMap<>();
-    protected Map<Integer, Boolean> isQuestItemCache = new HashMap<>();
-    protected Map<Integer, Boolean> isPartyQuestItemCache = new HashMap<>();
-    protected Map<Integer, Pair<Integer, String>> replaceOnExpireCache = new HashMap<>();
-    protected Map<Integer, String> equipmentSlotCache = new HashMap<>();
-    protected Map<Integer, Boolean> noCancelMouseCache = new HashMap<>();
-    protected Map<Integer, Integer> mobCrystalMakerCache = new HashMap<>();
-    protected Map<Integer, Pair<String, Integer>> statUpgradeMakerCache = new HashMap<>();
-    protected Map<Integer, MakerItemFactory.MakerItemCreateEntry> makerItemCache = new HashMap<>();
-    protected Map<Integer, Integer> makerCatalystCache = new HashMap<>();
-    protected Map<Integer, Map<String, Integer>> skillUpgradeCache = new HashMap<>();
-    protected Map<Integer, Data> skillUpgradeInfoCache = new HashMap<>();
-    protected Map<Integer, Pair<Integer, Set<Integer>>> cashPetFoodCache = new HashMap<>();
-    protected Map<Integer, QuestConsItem> questItemConsCache = new HashMap<>();
+    protected Map<Integer, Boolean> consumeOnPickupCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> isQuestItemCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> isPartyQuestItemCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Pair<Integer, String>> replaceOnExpireCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, String> equipmentSlotCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Boolean> noCancelMouseCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> mobCrystalMakerCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Pair<String, Integer>> statUpgradeMakerCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, MakerItemFactory.MakerItemCreateEntry> makerItemCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Integer> makerCatalystCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Map<String, Integer>> skillUpgradeCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Data> skillUpgradeInfoCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, Pair<Integer, Set<Integer>>> cashPetFoodCache = Collections.synchronizedMap(new HashMap<>());
+    protected Map<Integer, QuestConsItem> questItemConsCache = Collections.synchronizedMap(new HashMap<>());
 
     private ItemInformationProvider() {
         loadCardIdData();
