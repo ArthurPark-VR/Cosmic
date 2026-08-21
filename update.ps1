@@ -147,12 +147,17 @@ while ((Get-Date) -lt $deadline) {
 Say ''
 switch ($outcome) {
     'online' {
-        $bots = ([regex]'Bot bodies: (\d+) of (\d+) in the world').Match(
-                    (docker compose logs --tail 400 maplestory 2>&1 | Out-String))
+        # SoloMapling's own startup line. The previous pattern here looked for "Bot bodies: N of M",
+        # which was printed by the pre-rebase bot code and no longer exists - so the count silently
+        # never appeared.
+        $log  = docker compose logs --tail 400 maplestory 2>&1 | Out-String
+        $bots = ([regex]'All bots initialized: (\d+) bots').Match($log)
         Good '======================================='
         Good ' Your server is running. Go ahead and log in.'
-        if ($bots.Success) { Good " $($bots.Groups[1].Value) of $($bots.Groups[2].Value) characters are in the world." }
+        if ($bots.Success) { Good " $($bots.Groups[1].Value) characters are in the world." }
         Good '======================================='
+        Warn ' The first walk into a busy town is heavy while the client takes them all in.'
+        Warn ' That settles once everything has loaded.'
     }
     'migration' {
         Bad 'The server could not update its database and did not start.'
